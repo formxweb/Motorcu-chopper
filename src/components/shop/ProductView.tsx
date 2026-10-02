@@ -64,7 +64,7 @@ export function ProductView({ product, images, variants, shipText, showSizeGuide
 
   let stockText = '';
   let stockTone = '';
-  if (needSize) stockText = `${p.sizeLabel} seç`;
+  if (needSize) stockText = '';
   else if (!variant) {
     stockText = 'Bu seçenek satışta değil';
     stockTone = 'bad';
@@ -103,9 +103,10 @@ export function ProductView({ product, images, variants, shipText, showSizeGuide
             ))}
           </div>
         ) : null}
+        {p.customFields.length ? <p className="small muted">Görseldeki yazılar örnektir; armada senin yazdığın metin işlenir.</p> : null}
       </div>
 
-      <form className="pv-buy" onSubmit={onSubmit} noValidate data-testid="sepete-ekle-formu">
+      <div className="pv-buy">
         <div className="pv-title">
           <h1>{p.name}</h1>
           {favorite}
@@ -122,10 +123,13 @@ export function ProductView({ product, images, variants, shipText, showSizeGuide
           ) : null}
         </p>
 
+        <form className="pv-form" onSubmit={onSubmit} noValidate data-testid="sepete-ekle-formu">
         {hasColors ? (
           <fieldset className="opt">
             <legend>
-              {p.colorLabel}: <strong>{color}</strong>
+              <span>
+                {p.colorLabel}: <strong>{color}</strong>
+              </span>
             </legend>
             <div className="swatches">
               {p.colors.map((c) => {
@@ -206,9 +210,11 @@ export function ProductView({ product, images, variants, shipText, showSizeGuide
         <input type="hidden" name="variantId" value={variant?.id ?? ''} />
         <input type="hidden" name="quantity" value={qty} />
 
-        <p className={`stock stock-${stockTone}`} data-testid="stok-durumu">
-          {stockText}
-        </p>
+        {stockText ? (
+          <p className={`stock stock-${stockTone}`} data-testid="stok-durumu">
+            {stockText}
+          </p>
+        ) : null}
 
         <div className="pv-actions">
           <div className="qty" role="group" aria-label="Adet">
@@ -235,7 +241,8 @@ export function ProductView({ product, images, variants, shipText, showSizeGuide
           </div>
         ) : null}
         <p className="ship-note">{shipText}</p>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

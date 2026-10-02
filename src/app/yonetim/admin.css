@@ -345,15 +345,20 @@
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px 14px;
+}
+article.op {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 .op > summary {
   cursor: pointer;
   font-weight: 600;
 }
 .op[open] > summary {
-  margin-bottom: 4px;
+  margin-bottom: 12px;
+}
+.op > .form + .confirm {
+  margin-top: 12px;
 }
 .op .form {
   gap: 12px;

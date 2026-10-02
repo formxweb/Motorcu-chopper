@@ -434,8 +434,10 @@ input[type='radio'] {
   margin: 6px 0;
   width: 100%;
 }
-.brand {
+.head-main .brand {
   grid-area: brand;
+}
+.brand {
   display: inline-flex;
   flex-direction: column;
   text-decoration: none;
@@ -541,7 +543,7 @@ input[type='radio'] {
   .head-search {
     width: 100%;
   }
-  .brand {
+  .head-main .brand {
     justify-self: start;
   }
 }
@@ -586,6 +588,7 @@ input[type='radio'] {
   display: grid;
   gap: 14px;
   align-content: start;
+  justify-items: start;
 }
 .foot-pay,
 .foot-contact p {
@@ -1153,6 +1156,10 @@ input[type='radio'] {
   gap: 18px;
   position: sticky;
   top: 110px;
+}
+.pv-form {
+  display: grid;
+  gap: 18px;
 }
 .pv-title {
   display: flex;

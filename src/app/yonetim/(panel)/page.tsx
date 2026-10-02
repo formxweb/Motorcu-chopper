@@ -31,7 +31,7 @@ export default async function Dashboard() {
     db
       .select({
         sum: sql<number>`coalesce(sum(coalesce(${orders.paidTotal}, ${orders.total}) - ${orders.refundTotal}), 0)`.mapWith(Number),
-        n: sql<number>`count(*)`.mapWith(Number),
+        n: sql<number>`count(*) filter (where ${orders.status} not in ('cancelled', 'refunded'))`.mapWith(Number),
       })
       .from(orders)
       .where(and(inArray(orders.status, PAID), gte(orders.paidAt, from)));

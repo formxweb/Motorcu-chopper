@@ -30,6 +30,13 @@ export function formatPhone(p: string): string {
   return p;
 }
 
+const CARD: Record<string, string> = { MASTER_CARD: 'Mastercard', VISA: 'Visa', AMERICAN_EXPRESS: 'American Express', TROY: 'Troy' };
+
+export function cardName(association?: string, family?: string): string {
+  const a = association ? CARD[association] ?? association.replace(/_/g, ' ') : 'Kart';
+  return family ? `${a} ${family}` : a;
+}
+
 export function plural(n: number, word: string): string {
   return `${n} ${word}`;
 }

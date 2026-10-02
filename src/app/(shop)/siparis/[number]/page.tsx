@@ -6,7 +6,7 @@ import { AddressCard, ItemsList, OrderProgress, StatusBadge, Timeline, TotalsLis
 import { OrderRequestForm } from '@/components/shop/OrderRequestForm';
 import { db } from '@/db';
 import { orderEvents, orderItems } from '@/db/schema';
-import { formatDate } from '@/lib/format';
+import { cardName, formatDate } from '@/lib/format';
 import { accessibleOrder } from '@/lib/order-access';
 import { getSettings } from '@/lib/settings';
 
@@ -91,7 +91,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
           <TotalsList o={o} />
           {pi?.lastFourDigits ? (
             <p className="small muted">
-              Ödeme: {pi.cardAssociation ? pi.cardAssociation.replace(/_/g, ' ').toLowerCase() : 'kart'} •••• {pi.lastFourDigits}
+              Ödeme: {cardName(pi.cardAssociation, pi.cardFamily)} •••• {pi.lastFourDigits}
               {o.installment && o.installment > 1 ? `, ${o.installment} taksit` : ', tek çekim'}
             </p>
           ) : null}

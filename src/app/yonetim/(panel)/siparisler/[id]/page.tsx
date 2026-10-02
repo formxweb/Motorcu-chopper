@@ -5,7 +5,7 @@ import { OrderActions } from '@/components/admin/OrderActions';
 import { AddressCard, ItemsList, StatusBadge, Timeline, TotalsList } from '@/components/OrderBits';
 import { db } from '@/db';
 import { orderEvents, orderItems, orders } from '@/db/schema';
-import { formatDate, formatPhone } from '@/lib/format';
+import { cardName, formatDate, formatPhone } from '@/lib/format';
 import { formatTL } from '@/lib/money';
 import { getSettings } from '@/lib/settings';
 import { isUuid } from '@/lib/utils';
@@ -120,7 +120,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
               <dt>iyzico ödeme no</dt>
               <dd className="sel">{o.paymentId || '-'}</dd>
               <dt>Kart</dt>
-              <dd>{pi?.lastFourDigits ? `${pi.cardAssociation ?? ''} ${pi.cardFamily ?? ''} •••• ${pi.lastFourDigits}` : '-'}</dd>
+              <dd>{pi?.lastFourDigits ? `${cardName(pi.cardAssociation, pi.cardFamily)} •••• ${pi.lastFourDigits}` : '-'}</dd>
               <dt>Taksit</dt>
               <dd>{o.installment && o.installment > 1 ? `${o.installment} taksit` : 'Tek çekim'}</dd>
               <dt>Çekilen</dt>

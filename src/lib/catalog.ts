@@ -85,10 +85,10 @@ export async function listProducts(params: ListParams): Promise<{ items: Product
     if (c) conds.push(c);
   }
   if (params.color) {
-    conds.push(sql`exists (select 1 from ${variants} v where v.product_id = ${products.id} and v.color = ${params.color} and v.is_active)`);
+    conds.push(sql`exists (select 1 from variants v where v.product_id = products.id and v.color = ${params.color} and v.is_active)`);
   }
   if (params.size) {
-    conds.push(sql`exists (select 1 from ${variants} v where v.product_id = ${products.id} and v.size = ${params.size} and v.is_active)`);
+    conds.push(sql`exists (select 1 from variants v where v.product_id = products.id and v.size = ${params.size} and v.is_active)`);
   }
   const where = and(...conds);
   const order =
@@ -129,7 +129,7 @@ export async function activeCategories() {
       slug: categories.slug,
       name: categories.name,
       description: categories.description,
-      count: sql<number>`(select count(*) from ${products} p where p.category_id = ${categories.id} and p.is_active)`.mapWith(Number),
+      count: sql<number>`(select count(*) from products p where p.category_id = categories.id and p.is_active)`.mapWith(Number),
     })
     .from(categories)
     .where(eq(categories.isActive, true))

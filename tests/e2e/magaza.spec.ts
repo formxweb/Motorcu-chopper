@@ -174,6 +174,11 @@ test('ana sayfa, kategori ve ürün sayfası açılır', async ({ browser }) => 
 
   await go(page, '/urunler?q=kot');
   await expect(page.getByTestId('urun-sayisi')).toHaveText('2 ürün');
+  await go(page, '/urunler?renk=Bordo');
+  await expect(page.getByTestId('urun-sayisi')).toHaveText('2 ürün');
+  await go(page, '/urunler?beden=XS');
+  await expect(page.getByTestId('urun-sayisi')).toHaveText('1 ürün');
+  await expect(page.getByRole('navigation', { name: 'Kategoriler' }).getByRole('link', { name: 'Deri yelek' })).toBeVisible();
 
   await go(page, '/urun/yan-bagcikli-deri-yelek');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Yan Bağcıklı Deri Yelek');
@@ -308,7 +313,7 @@ test('yönetici siparişi hazırlar, kargolar ve teslim eder; müşteri takip ed
 test('müşteri iade talebi oluşturur, yönetici kısmi ve tam iade yapar', async () => {
   const c = await guest.newPage();
   await go(c, S.guestUrl as string);
-  await c.getByText('İade talebi oluştur').click();
+  await c.getByText('İade talebi oluştur', { exact: true }).click();
   await c.locator('#talep-return').fill('Beden büyük geldi, M ile değişim istiyorum');
   await c.getByTestId('iade-formu').getByRole('button', { name: 'Talebi gönder' }).click();
   await expect(c.getByTestId('talep-mesaji')).toHaveText('İade talebin alındı.');

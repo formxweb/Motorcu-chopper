@@ -21,7 +21,7 @@ export function OrderProgress({ status }: { status: OrderStatus }) {
   return (
     <ol className="progress" aria-label="Sipariş durumu">
       {PROGRESS_STEPS.map((s, i) => (
-        <li key={s.key} className={i < idx ? 'done' : i === idx ? 'now' : ''} aria-current={i === idx ? 'step' : undefined}>
+        <li key={s.key} className={i < idx || (i === idx && status === 'delivered') ? 'done' : i === idx ? 'now' : ''} aria-current={i === idx ? 'step' : undefined}>
           <span className="progress-dot" />
           <span>{s.label}</span>
         </li>

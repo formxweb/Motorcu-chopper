@@ -2,13 +2,13 @@ import { asc, sql } from 'drizzle-orm';
 import { deleteCategory, saveCategory } from '@/app/actions/admin-catalog';
 import { ActionForm, ConfirmButton } from '@/components/forms';
 import { db } from '@/db';
-import { categories, products } from '@/db/schema';
+import { categories } from '@/db/schema';
 
 export default async function CategoriesPage() {
   const list = await db
     .select({
       c: categories,
-      n: sql<number>`(select count(*) from ${products} p where p.category_id = ${categories.id})`.mapWith(Number),
+      n: sql<number>`(select count(*) from products p where p.category_id = categories.id)`.mapWith(Number),
     })
     .from(categories)
     .orderBy(asc(categories.sortOrder), asc(categories.name));
