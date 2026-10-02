@@ -58,9 +58,9 @@ export default async function Dashboard() {
     { ok: iyzicoReady() && !iz.sandbox, title: 'Canlı ödeme', hint: 'iyzico üye işyeri başvurun onaylanınca canlı anahtarları gir.' },
     { ok: seller.length === 0, title: 'Satıcı ve iletişim bilgileri', hint: seller.length ? `Eksik: ${seller.join(', ')}. Sözleşmelerde görünür.` : 'Tamam.' },
     { ok: smtpReady(), title: 'E-posta gönderimi', hint: smtpReady() ? 'SMTP ayarlı.' : 'SMTP_HOST, SMTP_USER, SMTP_PASS ekle. Şimdilik e-postalar yalnızca E-postalar sayfasına kaydediliyor.' },
-    { ok: storageMode() === 'supabase', title: 'Görsel depolama', hint: storageMode() === 'supabase' ? 'Supabase Storage ayarlı.' : 'SUPABASE_URL ve SUPABASE_SECRET_KEY ekle, yoksa canlıda görsel yüklenemez.' },
+    { ok: true, title: 'Görsel depolama', hint: storageMode() === 'supabase' ? 'Supabase Storage ayarlı.' : storageMode() === 'database' ? 'Fotoğraflar veritabanında saklanıyor. Yüzlerce ürün fotoğrafı olacaksa Supabase Storage eklenebilir (SUPABASE_URL, SUPABASE_SECRET_KEY).' : 'Yerel klasör (geliştirme).' },
     { ok: appUrl().startsWith('https://'), title: 'Site adresi (APP_URL)', hint: `Şu an: ${appUrl()}` },
-    { ok: !!process.env.CRON_SECRET, title: 'Günlük temizlik görevi', hint: 'CRON_SECRET ortam değişkenini ekle.' },
+    { ok: !!process.env.CRON_SECRET, title: 'Günlük temizlik görevi (isteğe bağlı)', hint: process.env.CRON_SECRET ? 'Ayarlı.' : 'CRON_SECRET ortam değişkenine uzun rastgele bir metin ekle. Eklemezsen yarım kalan ödemeler bu sayfayı her açtığında kontrol edilir.' },
     { ok: settings.storeOpen, title: 'Mağaza ziyaretçilere açık', hint: settings.storeOpen ? 'Açık.' : 'Ayarlar > Mağaza bölümünden aç.' },
   ];
   const missing = checklist.filter((c) => !c.ok).length;

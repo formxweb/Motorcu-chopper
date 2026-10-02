@@ -507,6 +507,10 @@ test('yönetici yeni ürün ekler, görsel yükler ve ürün mağazada görünü
   expect(src).toContain('/yuklenen/');
   const imgRes = await page.request.get(src as string);
   expect(imgRes.status()).toBe(200);
+  expect(imgRes.headers()['content-type']).toMatch(/^image\//);
+  // Canlı ortamda Supabase yoksa fotoğraflar veritabanında saklanır.
+  const [up] = await sql`select count(*)::int as n from uploads`;
+  expect(up.n).toBeGreaterThan(0);
 
   await go(page, '/yonetim');
   await shot(page, '22-yonetim-ozet');
@@ -524,5 +528,12 @@ test('bilgi sayfaları ve site haritası', async ({ request }) => {
   expect(await sm.text()).toContain('/urun/kulup-yelegi');
   const cron = await request.get('/api/cron/temizlik', { headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` } });
   expect(cron.status()).toBe(200);
+  const durum = await request.get('/durum');
+  expect(durum.status()).toBe(200);
+  const d = await durum.json();
+  expect(d.veritabani.baglanti).toBe('tamam');
+  expect(d.veritabani.tablolar).toBe('kurulu');
+  expect(d.gorsel_depolama).toBe('database');
+  expect(JSON.stringify(d)).not.toContain('mc:mc');
   await page.close();
 });

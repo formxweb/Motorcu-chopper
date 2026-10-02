@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSql } from '@/db';
+import { pooledDatabaseUrl } from '@/db/url';
 import { appUrl, iyzicoConfig, smtpReady, storageMode } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
@@ -22,15 +23,16 @@ function clean(msg: string): string {
 }
 
 export async function GET() {
-  const dbUrl = process.env.DATABASE_URL;
-  const db: Record<string, unknown> = { tanimli: !!dbUrl, sunucu: hostOf(dbUrl) };
+  const found = pooledDatabaseUrl();
+  const dbUrl = found?.value;
+  const db: Record<string, unknown> = { tanimli: !!dbUrl, degisken: found?.name ?? '', sunucu: hostOf(dbUrl) };
   if (dbUrl) {
     try {
       const sql = getSql();
       await sql`select 1`;
       db.baglanti = 'tamam';
       const t = await sql<{ n: number }[]>`select count(*)::int as n from information_schema.tables where table_schema = 'public' and table_name in ('settings', 'products', 'orders', 'users')`;
-      db.tablolar = t[0]?.n === 4 ? 'kurulu' : 'eksik (derleme sırasında kurulum çalışmamış)';
+      db.tablolar = t[0]?.n === 4 ? 'kurulu' : 'eksik (derleme sırasında kurulum çalışmamış, Redeploy gerekli)';
       if (t[0]?.n === 4) {
         const p = await sql<{ n: number }[]>`select count(*)::int as n from products`;
         const a = await sql<{ n: number }[]>`select count(*)::int as n from users where role = 'admin'`;

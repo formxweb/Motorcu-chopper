@@ -8,6 +8,13 @@
       "when": 1790932183283,
       "tag": "0000_sema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791000000000,
+      "tag": "0001_yuklenen_gorseller",
+      "breakpoints": true
     }
   ]
 }

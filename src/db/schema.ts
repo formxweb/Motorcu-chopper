@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -15,6 +16,12 @@ import {
 /* Bu dosyada yol takma adı (@/) kullanılmaz: kurulum betiği de içe aktarıyor. */
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' });
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return 'bytea';
+  },
+});
 
 export type UserRole = 'customer' | 'admin';
 
@@ -419,4 +426,13 @@ export const rateLimits = pgTable('rate_limits', {
   key: text('key').primaryKey(),
   count: integer('count').notNull(),
   resetAt: ts('reset_at').notNull(),
+});
+
+/* Supabase Storage ayarlı değilse yüklenen ürün fotoğrafları burada saklanır, /yuklenen/... adresinden sunulur. */
+export const uploads = pgTable('uploads', {
+  key: text('key').primaryKey(),
+  contentType: text('content_type').notNull(),
+  size: integer('size').notNull(),
+  data: bytea('data').notNull(),
+  createdAt: ts('created_at').notNull().defaultNow(),
 });

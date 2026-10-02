@@ -24,7 +24,20 @@ Motorcu yeleği, kulüp yeleği ve kişiye özel arma satan mağazanın kendi si
 
 **Otomatik e-postalar:** sipariş onayı (sözleşmeler ekte), kargoya verildi, teslim edildi, iptal, iade, şifre yenileme. Satıcıya yeni sipariş ve iptal/iade talebi bildirimi.
 
-## Kurulum
+## Tek tıkla kurulum
+
+[![Vercel ile kur](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fformxweb%2FMotorcu-chopper&project-name=motorcu-chopper-magaza&repository-name=motorcu-chopper-magaza&env=ADMIN_EMAIL,ADMIN_PASSWORD&envDescription=Y%C3%B6netim%20paneline%20girece%C4%9Fin%20e-posta%20ve%20%C5%9Fifre%20%28%C5%9Fifre%20en%20az%208%20karakter%29.&envLink=https%3A%2F%2Fgithub.com%2Fformxweb%2FMotorcu-chopper%23tek-t%C4%B1kla-kurulum&products=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%5D)
+
+1. Düğmeye bas, GitHub hesabınla Vercel'e gir.
+2. **Create** → depo senin GitHub hesabına kopyalanır.
+3. **Neon (Postgres)** veritabanı kutusunda **Add** / **Continue** de (ücretsiz plan, bölge olarak Frankfurt seç).
+4. `ADMIN_EMAIL` ve `ADMIN_PASSWORD` kutularına yönetim paneli için e-posta ve şifreni yaz (şifre en az 8 karakter), **Deploy**'a bas.
+
+2-3 dakika sonra site `https://motorcu-chopper-magaza.vercel.app` gibi bir adreste açılır: 12 örnek ürün, kategoriler ve yönetim paneli (`/yonetim`) hazırdır. Ürün fotoğrafları veritabanında saklanır, ayrıca depolama gerekmez. Kurulumun durumunu `/durum` adresinden görebilirsin.
+
+Kartla ödeme için sonradan Vercel'de **Settings → Environment Variables** bölümüne iyzico anahtarlarını ekleyip **Redeploy** yap (aşağıda 2. adım). Anahtar yokken site katalog olarak çalışır, sepette "Online ödeme henüz aktif değil" yazar.
+
+## Elle kurulum
 
 Gerekenler: GitHub (bu depo), [Vercel](https://vercel.com) ve [Supabase](https://supabase.com) hesabı (ikisinin de ücretsiz planı yeterli), iyzico hesabı, bir e-posta hesabı (SMTP).
 
@@ -35,8 +48,8 @@ Gerekenler: GitHub (bu depo), [Vercel](https://vercel.com) ve [Supabase](https:/
    - "Transaction pooler" adresini kopyala (port **6543**) → `DATABASE_URL`
    - "Session pooler" adresini kopyala (port **5432**) → `DIRECT_DATABASE_URL`
    - Adreslerdeki `[YOUR-PASSWORD]` yerine veritabanı şifreni yaz.
-3. **Project Settings → API Keys**: Project URL → `SUPABASE_URL`, **secret** anahtar (eski panelde `service_role`) → `SUPABASE_SECRET_KEY`.
-   Görsellerin konduğu `urunler` kovası ilk kurulumda otomatik açılır.
+3. (İsteğe bağlı) **Project Settings → API Keys**: Project URL → `SUPABASE_URL`, **secret** anahtar (eski panelde `service_role`) → `SUPABASE_SECRET_KEY`.
+   Girersen ürün fotoğrafları Supabase Storage'a yüklenir (`urunler` kovası ilk kurulumda otomatik açılır); girmezsen veritabanında saklanır.
 
 ### 2. iyzico test hesabı
 
@@ -52,13 +65,13 @@ Gerekenler: GitHub (bu depo), [Vercel](https://vercel.com) ve [Supabase](https:/
 | Değişken | Değer |
 | --- | --- |
 | `APP_URL` | Sitenin adresi, ör. `https://motorcuchopper.com` (alan adı yoksa Vercel'in verdiği `https://...vercel.app`) |
-| `DATABASE_URL`, `DIRECT_DATABASE_URL` | 1. adımdaki adresler |
+| `DATABASE_URL`, `DIRECT_DATABASE_URL` | 1. adımdaki adresler (Vercel'in Neon eklentisinin verdiği `DATABASE_URL` / `DATABASE_URL_UNPOOLED` da olur) |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | 1. adımdaki değerler |
 | `IYZICO_BASE_URL` | Testte `https://sandbox-api.iyzipay.com` |
 | `IYZICO_API_KEY`, `IYZICO_SECRET_KEY` | 2. adımdaki anahtarlar |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | İlk yönetici hesabın (şifre en az 10 karakter) |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | İlk yönetici hesabın (şifre en az 8 karakter) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | E-posta hesabının SMTP bilgileri |
-| `CRON_SECRET` | Uzun rastgele bir metin |
+| `CRON_SECRET` | (İsteğe bağlı) uzun rastgele bir metin; günlük temizlik görevi için |
 
 3. **Deploy**'a bas. Derleme sırasında tablolar oluşur, örnek ürünler eklenir ve yönetici hesabın açılır.
 4. Alan adın varsa **Settings → Domains** bölümünden ekle, sonra `APP_URL`'i güncelleyip yeniden yayınla (**Deployments → Redeploy**).
@@ -70,7 +83,7 @@ Gerekenler: GitHub (bu depo), [Vercel](https://vercel.com) ve [Supabase](https:/
 3. **Ayarlar → Mağaza**: iletişim e-postası, telefon, yeni sipariş bildiriminin gideceği e-posta.
 4. **Ürünler**: örnek ürünlerin fiyat ve stoklarını güncelle, çizim görselleri silip gerçek fotoğrafları yükle. İstemediğin ürünü sil veya "Satışta" kutusunu kapat.
 5. **Özet** sayfasındaki kurulum listesinde eksik kalan adımları tamamla.
-6. **Ayarlar → Mağaza → "Mağaza ziyaretçilere açık"** kutusunu işaretle. Kapalıyken ziyaretçiler "Yakında" sayfasını görür; sen yönetici olarak siteyi görebilirsin.
+6. Mağaza ilk kurulumda ziyaretçilere açık başlar. Hazırlık bitene kadar kapatmak istersen **Ayarlar → Mağaza → "Mağaza ziyaretçilere açık"** kutusunu kaldır; kapalıyken ziyaretçiler "Yakında" sayfasını görür, sen yönetici olarak siteyi görebilirsin.
 
 ### 5. E-posta (SMTP)
 

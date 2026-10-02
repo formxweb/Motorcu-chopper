@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { getSql } from '../db';
 import { storageMode, supabaseStorage } from './env';
 
 export const LOCAL_UPLOAD_DIR = path.join(process.cwd(), '.yuklenen');
@@ -43,7 +44,16 @@ export async function uploadImage(bytes: Uint8Array, contentType: string): Promi
     return `/yuklenen/${key}`;
   }
 
-  throw new Error('Görsel depolama ayarlanmadı. SUPABASE_URL ve SUPABASE_SECRET_KEY ortam değişkenlerini ekleyin.');
+  const sql = getSql();
+  await sql`insert into uploads (key, content_type, size, data) values (${key}, ${contentType}, ${bytes.byteLength}, ${Buffer.from(bytes)})`;
+  return `/yuklenen/${key}`;
+}
+
+/** Veritabanında saklanan görseli döner (yoksa null). */
+export async function readStoredImage(key: string): Promise<{ contentType: string; data: Buffer } | null> {
+  const sql = getSql();
+  const rows = await sql<{ content_type: string; data: Buffer }[]>`select content_type, data from uploads where key = ${key} limit 1`;
+  return rows[0] ? { contentType: rows[0].content_type, data: rows[0].data } : null;
 }
 
 /** Supabase'de herkese açık "urunler" kovasını oluşturur (varsa dokunmaz). */

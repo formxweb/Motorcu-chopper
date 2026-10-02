@@ -1,26 +1,23 @@
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
+import { connectionOptions, pooledDatabaseUrl } from './url';
 
 export type Db = PostgresJsDatabase<typeof schema>;
 
 const g = globalThis as unknown as { __mcSql?: postgres.Sql; __mcDb?: Db };
 
-function isLocal(url: string) {
-  return /@(localhost|127\.0\.0\.1|\[::1\])(:|\/)/.test(url);
-}
-
 export function getSql(): postgres.Sql {
   if (!g.__mcSql) {
-    const url = process.env.DATABASE_URL;
-    if (!url) throw new Error('DATABASE_URL tanımlı değil. .env dosyasına veya Vercel ortam değişkenlerine ekleyin.');
-    const sslOff = process.env.DATABASE_SSL === 'false' || isLocal(url);
+    const found = pooledDatabaseUrl();
+    if (!found) throw new Error('DATABASE_URL tanımlı değil. .env dosyasına veya Vercel ortam değişkenlerine ekleyin.');
+    const { url, ssl } = connectionOptions(found.value);
     g.__mcSql = postgres(url, {
       prepare: false,
       max: process.env.NODE_ENV === 'production' ? 4 : 6,
       idle_timeout: 20,
       connect_timeout: 15,
-      ssl: sslOff ? false : 'require',
+      ssl,
       onnotice: () => {},
     });
   }

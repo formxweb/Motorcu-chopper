@@ -10,6 +10,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
 import { categories, productImages, products, settings, users, variants } from '../src/db/schema';
+import { connectionOptions, directDatabaseUrl } from '../src/db/url';
 import { DEFAULT_SETTINGS } from '../src/lib/settings-defaults';
 import { ensureBucket } from '../src/lib/storage';
 import { SEED_CATEGORIES, SEED_PRODUCTS } from './seed-data';
@@ -21,13 +22,14 @@ try {
 }
 
 async function main() {
-  const url = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
-  if (!url) {
+  const found = directDatabaseUrl();
+  if (!found) {
     console.warn('[kurulum] DATABASE_URL tanımlı değil, veritabanı kurulumu atlandı.');
     return;
   }
-  const local = /@(localhost|127\.0\.0\.1)(:|\/)/.test(url);
-  const client = postgres(url, { prepare: false, max: 1, ssl: local || process.env.DATABASE_SSL === 'false' ? false : 'require', onnotice: () => {} });
+  console.log(`[kurulum] veritabanı adresi ${found.name} değişkeninden alındı.`);
+  const { url, ssl } = connectionOptions(found.value);
+  const client = postgres(url, { prepare: false, max: 1, ssl, connect_timeout: 20, onnotice: () => {} });
   const db = drizzle(client);
 
   try {
@@ -36,7 +38,8 @@ async function main() {
 
     await db
       .insert(settings)
-      .values({ id: 1, data: DEFAULT_SETTINGS as unknown as Record<string, unknown> })
+      // İlk kurulumda mağaza ziyaretçilere açık başlar; STORE_START_CLOSED=true ise kapalı.
+      .values({ id: 1, data: { ...DEFAULT_SETTINGS, storeOpen: process.env.STORE_START_CLOSED !== 'true' } as unknown as Record<string, unknown> })
       .onConflictDoNothing();
 
     const [{ n }] = await db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(products);
@@ -106,8 +109,8 @@ async function main() {
     if (email && password) {
       const [u] = await db.select().from(users).where(eq(users.email, email)).limit(1);
       if (!u) {
-        if (password.length < 10) {
-          console.warn('[kurulum] ADMIN_PASSWORD en az 10 karakter olmalı, yönetici oluşturulmadı.');
+        if (password.length < 8) {
+          console.warn('[kurulum] ADMIN_PASSWORD en az 8 karakter olmalı, yönetici oluşturulmadı.');
         } else {
           await db.insert(users).values({ email, passwordHash: await bcrypt.hash(password, 11), role: 'admin', firstName: 'Yönetici' });
           console.log(`[kurulum] yönetici oluşturuldu: ${email}`);
@@ -115,7 +118,7 @@ async function main() {
       } else {
         const patch: Partial<typeof users.$inferInsert> = {};
         if (u.role !== 'admin') patch.role = 'admin';
-        if (process.env.ADMIN_RESET_PASSWORD === 'true' && password.length >= 10) patch.passwordHash = await bcrypt.hash(password, 11);
+        if (process.env.ADMIN_RESET_PASSWORD === 'true' && password.length >= 8) patch.passwordHash = await bcrypt.hash(password, 11);
         if (Object.keys(patch).length) {
           await db.update(users).set(patch).where(eq(users.id, u.id));
           console.log(`[kurulum] yönetici güncellendi: ${email}`);

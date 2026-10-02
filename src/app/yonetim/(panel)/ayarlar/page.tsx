@@ -160,7 +160,7 @@ export default async function SettingsPage() {
               <dt>E-posta</dt>
               <dd>{smtpReady() ? 'SMTP ayarlı' : 'Ayarlı değil'}</dd>
               <dt>Görsel depolama</dt>
-              <dd>{storageMode() === 'supabase' ? 'Supabase Storage' : storageMode() === 'local' ? 'Yerel klasör (yalnızca geliştirme)' : 'Ayarlı değil'}</dd>
+              <dd>{storageMode() === 'supabase' ? 'Supabase Storage' : storageMode() === 'local' ? 'Yerel klasör (yalnızca geliştirme)' : 'Veritabanı'}</dd>
               <dt>Site adresi</dt>
               <dd>{appUrl()}</dd>
             </dl>

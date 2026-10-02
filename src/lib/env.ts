@@ -42,9 +42,10 @@ export function supabaseStorage() {
   };
 }
 
-export function storageMode(): 'supabase' | 'local' | 'none' {
+/** Ürün fotoğraflarının nereye yükleneceği: Supabase Storage, yerel klasör (geliştirme) veya veritabanı. */
+export function storageMode(): 'supabase' | 'local' | 'database' {
   const s = supabaseStorage();
   if (s.url && s.key) return 'supabase';
   if (process.env.STORAGE_LOCAL === 'true' || process.env.NODE_ENV !== 'production') return 'local';
-  return 'none';
+  return 'database';
 }
