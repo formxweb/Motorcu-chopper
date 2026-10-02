@@ -117,7 +117,11 @@ export default async function OrderPage({ params, searchParams }: { params: Para
           <div className="order-actions">
             {canCancel ? <OrderRequestForm number={o.number} token={t} kind="cancel" /> : null}
             {canReturn ? <OrderRequestForm number={o.number} token={t} kind="return" /> : null}
-            {o.requestType ? <p className="msg msg-warn">Açık talebin var, en kısa sürede dönüş yapacağız.</p> : null}
+            {o.requestType ? (
+              <p className="msg msg-warn" data-testid="acik-talep">
+                {o.requestType === 'return' ? 'İade talebin alındı.' : 'İptal talebin alındı.'} En kısa sürede e-postayla dönüş yapacağız.
+              </p>
+            ) : null}
             {o.contractsHtml ? (
               <details className="contracts">
                 <summary className="link-btn">Sözleşmeleri görüntüle</summary>

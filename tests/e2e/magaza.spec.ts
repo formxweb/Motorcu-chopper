@@ -182,7 +182,9 @@ test('ana sayfa, kategori ve ürün sayfası açılır', async ({ browser }) => 
 
   await go(page, '/urun/yan-bagcikli-deri-yelek');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Yan Bağcıklı Deri Yelek');
-  await expect(page.getByTestId('stok-durumu')).toHaveText('Beden seç');
+  await expect(page.getByTestId('sepete-ekle')).toHaveText('Beden seç');
+  await page.getByRole('button', { name: 'L', exact: true }).click();
+  await expect(page.getByTestId('stok-durumu')).toHaveText('Stokta');
   await shot(page, '03-urun');
   await page.close();
 
@@ -316,7 +318,8 @@ test('müşteri iade talebi oluşturur, yönetici kısmi ve tam iade yapar', asy
   await c.getByText('İade talebi oluştur', { exact: true }).click();
   await c.locator('#talep-return').fill('Beden büyük geldi, M ile değişim istiyorum');
   await c.getByTestId('iade-formu').getByRole('button', { name: 'Talebi gönder' }).click();
-  await expect(c.getByTestId('talep-mesaji')).toHaveText('İade talebin alındı.');
+  await expect(c.getByTestId('acik-talep')).toContainText('İade talebin alındı.');
+  await expect(c.getByTestId('durum')).toHaveText('İade talebi');
   await c.close();
 
   const page = await adminPage();
@@ -385,7 +388,7 @@ test('üye olur, favoriye ekler, kayıtlı adresle sipariş verir, yorum yazar',
   await expect(page.getByTestId('siparislerim')).toContainText(S.memberOrder as string);
   await shot(page, '08-hesap');
   await go(page, '/hesap/adresler');
-  await expect(page.getByText('Kazımdirik Mah. 372 Sok. No 5 Daire 3')).toBeVisible();
+  await expect(page.locator('.addr-card > p').first()).toContainText('Kazımdirik Mah. 372 Sok. No 5 Daire 3');
 
   const a = await adminPage();
   await adminOrder(a, S.memberOrder as string);
