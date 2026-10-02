@@ -118,5 +118,6 @@ npm run dev             # http://localhost:3000
 ```
 
 - Veritabanı şemasını değiştirince: `npm run db:generate` (yeni göç dosyası `drizzle/` klasörüne yazılır, sonraki derlemede uygulanır).
-- Uçtan uca testler GitHub Actions'ta her gönderimde çalışır (`.github/workflows/ci.yml`): sahte iyzico sunucusuyla sipariş, ödeme, kargo, iade, iptal, üyelik, indirim kodu ve ürün ekleme akışlarını dener.
+- Uçtan uca testler GitHub Actions'ta her gönderimde çalışır (`.github/workflows/ci.yml`): sahte iyzico sunucusuyla sipariş, ödeme, kargo, iade, iptal, üyelik, indirim kodu ve ürün ekleme akışlarını dener. Test çıktıları ve ekran görüntüleri `ci-results` dalına yazılır.
+- GitHub'da **Settings → Secrets and variables → Actions** bölümüne `IYZICO_SANDBOX_API_KEY` ve `IYZICO_SANDBOX_SECRET_KEY` eklersen her testte iyzico'nun gerçek test sunucusuna da istek atılır ve kimlik doğrulaması kontrol edilir.
 - Örnek ürün görselleri `tools/ornek-gorseller` ile üretildi (`npm run gorseller`).

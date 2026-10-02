@@ -71,18 +71,6 @@ jobs:
           npx tsc --noEmit > out/tsc.txt 2>&1
           echo "tsc=$?" >> out/durum.txt
 
-      - name: Yazı tipi dosyalarını dışa aktar
-        run: |
-          mkdir -p out/fonts
-          for p in archivo big-shoulders-display pirata-one; do
-            cp node_modules/@fontsource/$p/package.json out/fonts/$p-package.json
-            ls node_modules/@fontsource/$p > out/fonts/$p-dosyalar.txt
-            ls node_modules/@fontsource/$p/files >> out/fonts/$p-dosyalar.txt
-          done
-          for w in 400 500 600 700; do for s in latin latin-ext; do cp node_modules/@fontsource/archivo/files/archivo-$s-$w-normal.woff2 out/fonts/; done; done
-          for w in 700 800 900; do for s in latin latin-ext; do cp node_modules/@fontsource/big-shoulders-display/files/big-shoulders-display-$s-$w-normal.woff2 out/fonts/; done; done
-          for s in latin latin-ext; do cp node_modules/@fontsource/pirata-one/files/pirata-one-$s-400-normal.woff2 out/fonts/; done
-
       - name: Örnek görseller
         if: hashFiles('public/ornek/paylasim.webp') == ''
         run: |
@@ -99,6 +87,14 @@ jobs:
         run: |
           npx next build > out/build.txt 2>&1
           echo "build=$?" >> out/durum.txt
+
+      - name: iyzico test sunucusu kontrolü
+        env:
+          IYZICO_SANDBOX_API_KEY: ${{ secrets.IYZICO_SANDBOX_API_KEY }}
+          IYZICO_SANDBOX_SECRET_KEY: ${{ secrets.IYZICO_SANDBOX_SECRET_KEY }}
+        run: |
+          npx tsx scripts/iyzico-sandbox-check.ts > out/iyzico-sandbox.txt 2>&1
+          echo "iyzico_sandbox=$?" >> out/durum.txt
 
       - name: Uçtan uca test
         run: |
