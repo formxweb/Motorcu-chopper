@@ -65,11 +65,11 @@ function buildJobs() {
     markup: svg(
       1200,
       630,
-      `<rect width="1200" height="630" fill="#17110e"/><rect x="640" width="560" height="630" fill="url(#g-studio)"/>
-       <text x="70" y="250" font-family="'Pirata One',serif" font-size="96" fill="#f1e8dc">Motorcu Chopper</text>
-       <text x="74" y="310" font-family="'Big Shoulders Display',sans-serif" font-weight="800" font-size="44" fill="#d4ad5f">Deri yelek, kulüp yeleği, sırt arması</text>
-       <text x="74" y="370" font-family="'Archivo',sans-serif" font-size="26" fill="#ac9d8b">Kartla güvenli ödeme, Türkiye geneli kargo</text>
-       <g transform="translate(700 20) scale(1.3)">${vestBack({ leather: 'black', collar: true }, heroRk)}</g>`,
+      `<rect width="1200" height="630" fill="#17110e"/><rect x="760" width="440" height="630" fill="url(#g-studio)"/>
+       <text x="64" y="250" font-family="'Pirata One',serif" font-size="88" fill="#f1e8dc">Motorcu Chopper</text>
+       <text x="68" y="308" font-family="'Big Shoulders Display',sans-serif" font-weight="800" font-size="42" fill="#d4ad5f">Deri yelek, kulüp yeleği, sırt arması</text>
+       <text x="68" y="364" font-family="'Archivo',sans-serif" font-size="24" fill="#ac9d8b">Kartla güvenli ödeme, Türkiye geneli kargo</text>
+       <g transform="translate(740 28) scale(1.24)">${vestBack({ leather: 'black', collar: true }, heroRk)}</g>`,
     ),
   });
   return jobs;
