@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import postgres from 'postgres';
 
@@ -10,12 +10,43 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD as string;
 const SHOTS = 'out/shots';
 mkdirSync(SHOTS, { recursive: true });
 
-test.describe.configure({ mode: 'serial' });
+/* Testler sırayla çalışır; biri düşerse sonrakiler yine denenir. Paylaşılan bilgi dosyada tutulur. */
+const STATE = 'out/e2e-durum.json';
+type State = { guestOrder?: string; guestUrl?: string; webhookOrder?: string; memberOrder?: string; memberPassword?: string };
+const S: State = existsSync(STATE) ? JSON.parse(readFileSync(STATE, 'utf8')) : {};
+const save = () => writeFileSync(STATE, JSON.stringify(S));
 
 let admin: BrowserContext;
 let guest: BrowserContext;
 let member: BrowserContext;
-const S: { guestOrder?: string; guestUrl?: string; webhookOrder?: string; memberOrder?: string } = {};
+
+function errMsg(page: Page) {
+  return page.locator('.msg-err');
+}
+
+async function adminPage(): Promise<Page> {
+  const page = await admin.newPage();
+  await go(page, '/yonetim');
+  if (page.url().includes('/yonetim/giris')) {
+    await page.locator('#a-email').fill(ADMIN_EMAIL);
+    await page.locator('#a-password').fill(ADMIN_PASSWORD);
+    await page.getByRole('button', { name: 'Giriş yap' }).click();
+    await page.waitForURL('**/yonetim');
+  }
+  return page;
+}
+
+async function memberPage(): Promise<Page> {
+  const page = await member.newPage();
+  await go(page, '/hesap');
+  if (page.url().includes('/hesap/giris')) {
+    await page.locator('#email').fill('uye@example.com');
+    await page.locator('#password').fill(S.memberPassword ?? 'uye-sifre-123');
+    await page.getByRole('button', { name: 'Giriş yap' }).click();
+    await page.waitForURL('**/hesap');
+  }
+  return page;
+}
 
 async function go(page: Page, url: string) {
   await page.goto(url);
@@ -107,7 +138,7 @@ test('yönetici giriş yapar, satıcı bilgilerini girer ve mağazayı açar', a
   await page.locator('#a-email').fill(ADMIN_EMAIL);
   await page.locator('#a-password').fill('yanlis-sifre');
   await page.getByRole('button', { name: 'Giriş yap' }).click();
-  await expect(page.getByRole('alert')).toContainText('hatalı');
+  await expect(errMsg(page)).toContainText('hatalı');
   await page.locator('#a-password').fill(ADMIN_PASSWORD);
   await page.getByRole('button', { name: 'Giriş yap' }).click();
   await page.waitForURL('**/yonetim');
@@ -188,6 +219,7 @@ test('misafir sepete ekler, kartla öder ve stok düşer', async () => {
   expect(number).toMatch(/^MC\d{11}$/);
   S.guestOrder = number;
   S.guestUrl = page.url().replace(/&odeme=.*/, '');
+  save();
   await shot(page, '06-siparis-alindi');
 
   const o = await orderRow(number);
@@ -240,11 +272,12 @@ test('iyzico bildirimi (webhook) ödemeyi onaylar, sahte imza reddedilir', async
   expect((await ok.json()).status).toBe('paid');
   expect((await orderRow(o.number)).status).toBe('paid');
   S.webhookOrder = o.number;
+  save();
   await page.close();
 });
 
 test('yönetici siparişi hazırlar, kargolar ve teslim eder; müşteri takip eder', async () => {
-  const page = await admin.newPage();
+  const page = await adminPage();
   await go(page, '/yonetim/siparisler');
   await expect(page.getByTestId('siparis-tablosu')).toContainText(S.guestOrder as string);
   await adminOrder(page, S.guestOrder as string);
@@ -281,7 +314,7 @@ test('müşteri iade talebi oluşturur, yönetici kısmi ve tam iade yapar', asy
   await expect(c.getByTestId('talep-mesaji')).toHaveText('İade talebin alındı.');
   await c.close();
 
-  const page = await admin.newPage();
+  const page = await adminPage();
   await adminOrder(page, S.guestOrder as string);
   await expect(page.getByTestId('durum')).toHaveText('İade talebi');
   const iade = page.getByTestId('op-iade');
@@ -304,7 +337,7 @@ test('müşteri iade talebi oluşturur, yönetici kısmi ve tam iade yapar', asy
 
 test('yönetici ödenmiş siparişi iptal eder, aynı gün iptali yapılır ve stok geri gelir', async () => {
   const before = await stock('deri-bakim-kremi', '', '');
-  const page = await admin.newPage();
+  const page = await adminPage();
   await adminOrder(page, S.webhookOrder as string);
   await page.getByText('Siparişi iptal et ve ücreti iade et').click();
   const iptal = page.getByTestId('op-iptal');
@@ -326,7 +359,7 @@ test('üye olur, favoriye ekler, kayıtlı adresle sipariş verir, yorum yazar',
   await page.locator('#r-email').fill('uye@example.com');
   await page.locator('#r-password').fill('uye-sifre-123');
   await page.getByRole('button', { name: 'Üye ol' }).click();
-  await expect(page.getByRole('alert')).toContainText('onayla');
+  await expect(errMsg(page)).toContainText('onayla');
   await page.locator('input[name="kvkk"]').check();
   await page.getByRole('button', { name: 'Üye ol' }).click();
   await page.waitForURL('**/hesap');
@@ -341,13 +374,15 @@ test('üye olur, favoriye ekler, kayıtlı adresle sipariş verir, yorum yazar',
   await checkout(page, { guest: false, result: 'ok' });
   await expect(page.getByTestId('odeme-basarili')).toBeVisible();
   S.memberOrder = (await page.getByTestId('siparis-no').textContent())?.trim();
+  S.memberPassword = 'uye-sifre-123';
+  save();
   await go(page, '/hesap');
   await expect(page.getByTestId('siparislerim')).toContainText(S.memberOrder as string);
   await shot(page, '08-hesap');
   await go(page, '/hesap/adresler');
   await expect(page.getByText('Kazımdirik Mah. 372 Sok. No 5 Daire 3')).toBeVisible();
 
-  const a = await admin.newPage();
+  const a = await adminPage();
   await adminOrder(a, S.memberOrder as string);
   const kargo = a.getByTestId('op-kargola');
   await kargo.locator('#trackingNumber').fill('987654321');
@@ -371,7 +406,7 @@ test('üye olur, favoriye ekler, kayıtlı adresle sipariş verir, yorum yazar',
 });
 
 test('indirim kodu sepete uygulanır ve ödemeye yansır', async () => {
-  const a = await admin.newPage();
+  const a = await adminPage();
   await go(a, '/yonetim/kuponlar');
   const f = a.getByTestId('kupon-formu');
   await f.locator('#code').fill('TEST10');
@@ -380,7 +415,7 @@ test('indirim kodu sepete uygulanır ve ödemeye yansır', async () => {
   await expect(a.getByTestId('kupon-tablosu')).toContainText('TEST10');
   await a.close();
 
-  const page = await member.newPage();
+  const page = await memberPage();
   await addToCart(page, 'cuzdan-zinciri');
   await go(page, '/sepet');
   await page.locator('#indirim-kodu').fill('test10');
@@ -404,7 +439,7 @@ test('misafir sipariş takibi ve şifre yenileme', async ({ browser }) => {
   await page.locator('#number').fill(S.guestOrder as string);
   await page.locator('#email').fill('yanlis@example.com');
   await page.getByRole('button', { name: 'Siparişimi bul' }).click();
-  await expect(page.getByRole('alert')).toContainText('bulunamadı');
+  await expect(errMsg(page)).toContainText('bulunamadı');
   await page.locator('#email').fill('misafir@example.com');
   await page.getByRole('button', { name: 'Siparişimi bul' }).click();
   await page.waitForURL(`**/siparis/${S.guestOrder}?t=*`);
@@ -420,12 +455,14 @@ test('misafir sipariş takibi ve şifre yenileme', async ({ browser }) => {
   await page.locator('#n-password').fill('yeni-sifre-456');
   await page.getByRole('button', { name: 'Şifreyi kaydet' }).click();
   await page.waitForURL('**/hesap?sifre=yenilendi');
+  S.memberPassword = 'yeni-sifre-456';
+  save();
   await expect(page.getByText('Şifren yenilendi.')).toBeVisible();
   await ctx.close();
 });
 
 test('yönetici yeni ürün ekler, görsel yükler ve ürün mağazada görünür', async () => {
-  const page = await admin.newPage();
+  const page = await adminPage();
   await go(page, '/yonetim/urunler/yeni');
   await page.locator('#pe-name').fill('Test Eldiveni');
   await page.locator('#pe-price').fill('799');
