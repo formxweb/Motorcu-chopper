@@ -181,7 +181,7 @@ export default async function ProductPage({ params }: { params: Params }) {
           ))}
           {user && bought.length ? (
             myReview[0]?.status === 'pending' ? (
-              <p className="muted">Yorumun inceleniyor.</p>
+              <p className="msg msg-ok">Yorumun alındı. İncelendikten sonra yayınlanacak.</p>
             ) : (
               <ReviewForm productId={p.id} slug={p.slug} />
             )
