@@ -18,7 +18,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
           <span className="brand-name">Motorcu Chopper</span>
           <h1>Site kısa bir süre için kapalı</h1>
           <p>Çok yakında tekrar buradayız. Sipariş ve sorular için Instagram veya WhatsApp üzerinden yazabilirsiniz.</p>
-          <p className="small muted">Site sahibiyseniz: veritabanı bağlantısı kurulamadı. Ayrıntı için /api/durum adresine bakın.</p>
+          <p className="small muted">Site sahibiyseniz: veritabanı bağlantısı kurulamadı. Ayrıntı için /durum adresine bakın.</p>
         </div>
       </main>
     );

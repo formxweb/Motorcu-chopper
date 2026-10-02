@@ -10,7 +10,8 @@ function hostOf(url: string | undefined): string {
   if (!url) return '';
   try {
     const u = new URL(url);
-    return `${u.hostname}:${u.port || '5432'}`;
+    const parts = u.hostname.split('.');
+    return `${parts.length > 3 ? '…' + parts.slice(-3).join('.') : u.hostname}:${u.port || '5432'}`;
   } catch {
     return 'adres okunamadı (biçim hatalı)';
   }
