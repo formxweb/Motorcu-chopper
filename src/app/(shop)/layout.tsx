@@ -7,7 +7,23 @@ import { activeCategories } from '@/lib/catalog';
 import { getSettings } from '@/lib/settings';
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
-  const [settings, user] = await Promise.all([getSettings(), getCurrentUser()]);
+  let loaded: [Awaited<ReturnType<typeof getSettings>>, Awaited<ReturnType<typeof getCurrentUser>>];
+  try {
+    loaded = await Promise.all([getSettings(), getCurrentUser()]);
+  } catch (e) {
+    console.error('[mağaza] veritabanına ulaşılamadı', e);
+    return (
+      <main className="soon">
+        <div className="soon-in">
+          <span className="brand-name">Motorcu Chopper</span>
+          <h1>Site kısa bir süre için kapalı</h1>
+          <p>Çok yakında tekrar buradayız. Sipariş ve sorular için Instagram veya WhatsApp üzerinden yazabilirsiniz.</p>
+          <p className="small muted">Site sahibiyseniz: veritabanı bağlantısı kurulamadı. Ayrıntı için /api/durum adresine bakın.</p>
+        </div>
+      </main>
+    );
+  }
+  const [settings, user] = loaded;
   const isAdmin = user?.role === 'admin';
 
   if (!settings.storeOpen && !isAdmin) {

@@ -1,9 +1,14 @@
 export function appUrl(): string {
-  const raw =
-    process.env.APP_URL ||
+  let raw =
+    (process.env.APP_URL || '').trim() ||
     (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '') ||
     'http://localhost:3000';
-  return raw.replace(/\/$/, '');
+  if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return 'http://localhost:3000';
+  }
 }
 
 export function isHttps(): boolean {
