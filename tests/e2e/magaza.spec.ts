@@ -706,9 +706,11 @@ test('üye olan müşteri yönetim paneline giremez', async ({ browser }) => {
   await expect(errMsg(page)).toContainText('yönetici yetkisi yok');
   const upload = await page.request.post('/api/yonetim/gorsel', { multipart: { main: { name: 'a.png', mimeType: 'image/png', buffer: Buffer.from('x') } } });
   expect(upload.status()).toBe(401);
+  const customerCookie = (await ctx.cookies()).find((c) => c.name === 'mc_oturum');
+  expect(customerCookie).toBeTruthy();
   await ctx.close();
 
-  // 2) Panel açıkken aynı tarayıcıda müşteri hesabına geçilirse panel içi geçişler de girişe döner
+  // 2) Panel açıkken tarayıcıdaki oturum müşteri hesabına geçerse panel içi geçişler de girişe döner
   const shared = await browser.newContext();
   const panel = await shared.newPage();
   await go(panel, '/yonetim/giris');
@@ -717,8 +719,7 @@ test('üye olan müşteri yönetim paneline giremez', async ({ browser }) => {
   await panel.getByRole('button', { name: 'Giriş yap' }).click();
   await panel.waitForURL('**/yonetim');
   await expect(panel.getByRole('heading', { name: 'Özet' })).toBeVisible();
-  const other = await shared.newPage();
-  await registerCustomer(other, 'yetkisiz2@example.com');
+  await shared.addCookies([customerCookie!]);
   await panel.getByRole('navigation', { name: 'Yönetim menüsü' }).getByRole('link', { name: 'Müşteriler' }).click();
   await panel.waitForURL(/\/yonetim\/giris/);
   await expect(panel.getByText('uye@example.com')).toHaveCount(0);
