@@ -1,0 +1,28 @@
+▲ Next.js 16.3.8
+- Local:         http://localhost:3000
+- Network:       http://10.1.0.74:3000
+✓ Ready in 133ms
+✓ Running next.config.ts took 38ms
+[e-posta] SMTP ayarlı değil, gönderilmedi: misafir@example.com | Siparişin alındı (MC26100386509)
+[e-posta] SMTP ayarlı değil, gönderilmedi: info@example.com | Yeni sipariş MC26100386509 (6.350 TL)
+[e-posta] SMTP ayarlı değil, gönderilmedi: misafir@example.com | Siparişin alındı (MC26100346711)
+[e-posta] SMTP ayarlı değil, gönderilmedi: info@example.com | Yeni sipariş MC26100346711 (570 TL)
+[e-posta] SMTP ayarlı değil, gönderilmedi: misafir@example.com | Siparişin kargoda (MC26100386509)
+[e-posta] SMTP ayarlı değil, gönderilmedi: misafir@example.com | Siparişin teslim edildi (MC26100386509)
+[e-posta] SMTP ayarlı değil, gönderilmedi: info@example.com | İade talebi: MC26100386509
+[e-posta] SMTP ayarlı değil, gönderilmedi: misafir@example.com | İaden yapıldı (MC26100386509)
+[e-posta] SMTP ayarlı değil, gönderilmedi: misafir@example.com | İaden yapıldı (MC26100386509)
+[e-posta] SMTP ayarlı değil, gönderilmedi: misafir@example.com | Siparişin iptal edildi (MC26100346711)
+[e-posta] SMTP ayarlı değil, gönderilmedi: uye@example.com | Siparişin alındı (MC26100383663)
+[e-posta] SMTP ayarlı değil, gönderilmedi: info@example.com | Yeni sipariş MC26100383663 (3.950 TL)
+[e-posta] SMTP ayarlı değil, gönderilmedi: uye@example.com | Siparişin kargoda (MC26100383663)
+[e-posta] SMTP ayarlı değil, gönderilmedi: uye@example.com | Siparişin teslim edildi (MC26100383663)
+[e-posta] SMTP ayarlı değil, gönderilmedi: uye@example.com | Siparişin alındı (MC26100380903)
+[e-posta] SMTP ayarlı değil, gönderilmedi: info@example.com | Yeni sipariş MC26100380903 (771 TL)
+[e-posta] SMTP ayarlı değil, gönderilmedi: uye@example.com | Şifre yenileme bağlantın
+[e-posta] SMTP ayarlı değil, gönderilmedi: shopier@example.com | Siparişin alındı (MC26100342066)
+[e-posta] SMTP ayarlı değil, gönderilmedi: info@example.com | Yeni sipariş MC26100342066 (840 TL)
+[shopier dönüş] imza doğrulanamadı MC26100340480
+[e-posta] SMTP ayarlı değil, gönderilmedi: shopier@example.com | Siparişin alındı (MC26100340480)
+[e-posta] SMTP ayarlı değil, gönderilmedi: info@example.com | Yeni sipariş MC26100340480 (840 TL)
+[e-posta] SMTP ayarlı değil, gönderilmedi: shopier@example.com | Siparişin iptal edildi (MC26100342066)

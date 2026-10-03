@@ -1,0 +1,60 @@
+▲ Next.js 16.3.8 (Turbopack)
+✓ Running next.config.ts took 50ms
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 7.3s
+  Running TypeScript ...
+  Finished TypeScript in 7.6s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/2) ...
+✓ Generating static pages using 3 workers (2/2) in 95ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/cron/temizlik
+├ ƒ /api/odeme/iyzico/callback
+├ ƒ /api/odeme/iyzico/webhook
+├ ƒ /api/odeme/shopier/baslat
+├ ƒ /api/odeme/shopier/geri-donus
+├ ƒ /api/yonetim/gorsel
+├ ƒ /beden-tablosu
+├ ƒ /durum
+├ ƒ /hesap
+├ ƒ /hesap/adresler
+├ ƒ /hesap/bilgiler
+├ ƒ /hesap/favoriler
+├ ƒ /hesap/giris
+├ ƒ /hesap/kayit
+├ ƒ /hesap/sifre-yenile
+├ ƒ /hesap/sifremi-unuttum
+├ ƒ /odeme
+├ ○ /robots.txt
+├ ƒ /sayfa/[slug]
+├ ƒ /sepet
+├ ƒ /siparis-takip
+├ ƒ /siparis/[number]
+├ ƒ /sitemap.xml
+├ ƒ /urun/[slug]
+├ ƒ /urunler
+├ ƒ /yonetim
+├ ƒ /yonetim/ayarlar
+├ ƒ /yonetim/e-postalar
+├ ƒ /yonetim/giris
+├ ƒ /yonetim/kategoriler
+├ ƒ /yonetim/kuponlar
+├ ƒ /yonetim/musteriler
+├ ƒ /yonetim/siparisler
+├ ƒ /yonetim/siparisler/[id]
+├ ƒ /yonetim/urunler
+├ ƒ /yonetim/urunler/[id]
+├ ƒ /yonetim/urunler/yeni
+├ ƒ /yonetim/yorumlar
+└ ƒ /yuklenen/[...yol]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

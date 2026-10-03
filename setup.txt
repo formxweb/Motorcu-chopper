@@ -1,0 +1,7 @@
+[kurulum] veritabanı adresi DATABASE_URL değişkeninden alındı.
+[kurulum] tablolar güncelleniyor…
+[kurulum] örnek ürünler ekleniyor…
+[kurulum] 12 ürün eklendi.
+[kurulum] yönetici oluşturuldu: yonetici@example.com
+[kurulum] Supabase depolama ayarlı değil, atlandı.
+[kurulum] tamam.

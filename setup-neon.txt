@@ -1,0 +1,4 @@
+[kurulum] veritabanı adresi DATABASE_URL_UNPOOLED değişkeninden alındı.
+[kurulum] tablolar güncelleniyor…
+[kurulum] Supabase depolama ayarlı değil, atlandı.
+[kurulum] tamam.

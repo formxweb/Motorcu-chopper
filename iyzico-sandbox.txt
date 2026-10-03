@@ -1,0 +1,1 @@
+atlandı: IYZICO_SANDBOX_API_KEY ve IYZICO_SANDBOX_SECRET_KEY tanımlı değil.

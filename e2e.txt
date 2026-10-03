@@ -1,0 +1,21 @@
+
+Running 16 tests using 1 worker
+
+  ✓   1 tests/e2e/magaza.spec.ts:126:5 › mağaza kapalıyken ziyaretçi "yakında" sayfasını görür (774ms)
+  ✓   2 tests/e2e/magaza.spec.ts:134:5 › yönetici giriş yapar, satıcı bilgilerini girer ve mağazayı açar (3.3s)
+  ✓   3 tests/e2e/magaza.spec.ts:164:5 › ana sayfa, kategori ve ürün sayfası açılır (7.0s)
+  ✓   4 tests/e2e/magaza.spec.ts:202:5 › misafir sepete ekler, kartla öder ve stok düşer (5.7s)
+  ✓   5 tests/e2e/magaza.spec.ts:247:5 › ödeme başarısız olursa stok geri döner ve sepet korunur (3.5s)
+  ✓   6 tests/e2e/magaza.spec.ts:262:5 › iyzico bildirimi (webhook) ödemeyi onaylar, sahte imza reddedilir (1.9s)
+  ✓   7 tests/e2e/magaza.spec.ts:286:5 › yönetici siparişi hazırlar, kargolar ve teslim eder; müşteri takip eder (3.6s)
+  ✓   8 tests/e2e/magaza.spec.ts:315:5 › müşteri iade talebi oluşturur, yönetici kısmi ve tam iade yapar (3.7s)
+  ✓   9 tests/e2e/magaza.spec.ts:346:5 › yönetici ödenmiş siparişi iptal eder, aynı gün iptali yapılır ve stok geri gelir (1.8s)
+  ✓  10 tests/e2e/magaza.spec.ts:362:5 › üye olur, favoriye ekler, kayıtlı adresle sipariş verir, yorum yazar (11.0s)
+  ✓  11 tests/e2e/magaza.spec.ts:416:5 › indirim kodu sepete uygulanır ve ödemeye yansır (5.7s)
+  ✓  12 tests/e2e/magaza.spec.ts:443:5 › misafir sipariş takibi ve şifre yenileme (2.8s)
+  ✓  13 tests/e2e/magaza.spec.ts:472:5 › yönetici yeni ürün ekler, görsel yükler ve ürün mağazada görünür (4.8s)
+  ✓  14 tests/e2e/magaza.spec.ts:520:5 › bilgi sayfaları ve site haritası (975ms)
+  ✓  15 tests/e2e/magaza.spec.ts:572:5 › Shopier: panelden bağlanır, kartla ödeme alınır, sahte dönüş reddedilir, elle onay ve iade kaydı (12.8s)
+  ✓  16 tests/e2e/magaza.spec.ts:693:5 › üye olan müşteri yönetim paneline giremez (6.3s)
+
+  16 passed (1.3m)

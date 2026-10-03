@@ -1,0 +1,673 @@
+{
+  "config": {
+    "argv": [
+      "/opt/hostedtoolcache/node/22.23.3/x64/bin/node",
+      "/home/runner/work/Motorcu-chopper/Motorcu-chopper/node_modules/.bin/playwright",
+      "test"
+    ],
+    "configFile": "/home/runner/work/Motorcu-chopper/Motorcu-chopper/playwright.config.ts",
+    "rootDir": "/home/runner/work/Motorcu-chopper/Motorcu-chopper/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "ci": {
+        "commitHref": "https://github.com/formxweb/Motorcu-chopper/commit/a02244f3f6e74bc77c7e710fa72fe4a72ec481d5",
+        "commitHash": "a02244f3f6e74bc77c7e710fa72fe4a72ec481d5",
+        "buildHref": "https://github.com/formxweb/Motorcu-chopper/actions/runs/37142846697"
+      },
+      "gitCommit": {
+        "shortHash": "a02244f",
+        "hash": "a02244f3f6e74bc77c7e710fa72fe4a72ec481d5",
+        "subject": "Yönetim paneli: her sayfada ayrıca yönetici kontrolü",
+        "body": "Yönetim paneli: her sayfada ayrıca yönetici kontrolü\n\nYönetici kontrolü yalnızca panel düzeninde (layout) yapılıyordu. Panel\niçi geçişlerde düzen yeniden çalışmadığından, tarayıcıdaki oturum\nyönetici olmayan bir hesaba geçtiğinde sayfalar yine açılabiliyordu.\nArtık her yönetim sayfası kendi kontrolünü yapar; başka hesapla giriş\nveya üyelikte önceki oturum da silinir. Uçtan uca yetki testi eklendi.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_019LfTLpmMeaRTvGNL9ML1cc\n",
+        "author": {
+          "name": "formxweb",
+          "email": "333866404+formxweb@users.noreply.github.com",
+          "time": 1791050668000
+        },
+        "committer": {
+          "name": "formxweb",
+          "email": "333866404+formxweb@users.noreply.github.com",
+          "time": 1791050668000
+        },
+        "branch": "main"
+      },
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/runner/work/Motorcu-chopper/Motorcu-chopper/out/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/formxweb/Motorcu-chopper/commit/a02244f3f6e74bc77c7e710fa72fe4a72ec481d5",
+            "commitHash": "a02244f3f6e74bc77c7e710fa72fe4a72ec481d5",
+            "buildHref": "https://github.com/formxweb/Motorcu-chopper/actions/runs/37142846697"
+          },
+          "gitCommit": {
+            "shortHash": "a02244f",
+            "hash": "a02244f3f6e74bc77c7e710fa72fe4a72ec481d5",
+            "subject": "Yönetim paneli: her sayfada ayrıca yönetici kontrolü",
+            "body": "Yönetim paneli: her sayfada ayrıca yönetici kontrolü\n\nYönetici kontrolü yalnızca panel düzeninde (layout) yapılıyordu. Panel\niçi geçişlerde düzen yeniden çalışmadığından, tarayıcıdaki oturum\nyönetici olmayan bir hesaba geçtiğinde sayfalar yine açılabiliyordu.\nArtık her yönetim sayfası kendi kontrolünü yapar; başka hesapla giriş\nveya üyelikte önceki oturum da silinir. Uçtan uca yetki testi eklendi.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_019LfTLpmMeaRTvGNL9ML1cc\n",
+            "author": {
+              "name": "formxweb",
+              "email": "333866404+formxweb@users.noreply.github.com",
+              "time": 1791050668000
+            },
+            "committer": {
+              "name": "formxweb",
+              "email": "333866404+formxweb@users.noreply.github.com",
+              "time": 1791050668000
+            },
+            "branch": "main"
+          },
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/home/runner/work/Motorcu-chopper/Motorcu-chopper/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "out/e2e-sonuc.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "magaza.spec.ts",
+      "file": "magaza.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "mağaza kapalıyken ziyaretçi \"yakında\" sayfasını görür",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 774,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:05:57.548Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-464ddf533fa682700b23",
+          "file": "magaza.spec.ts",
+          "line": 126,
+          "column": 5
+        },
+        {
+          "title": "yönetici giriş yapar, satıcı bilgilerini girer ve mağazayı açar",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3345,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:05:58.641Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-2d8280080204dcfac2a2",
+          "file": "magaza.spec.ts",
+          "line": 134,
+          "column": 5
+        },
+        {
+          "title": "ana sayfa, kategori ve ürün sayfası açılır",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7002,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:02.005Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-0235da07309237de4a5c",
+          "file": "magaza.spec.ts",
+          "line": 164,
+          "column": 5
+        },
+        {
+          "title": "misafir sepete ekler, kartla öder ve stok düşer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5680,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:09.019Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-4eadeb06326221dd749f",
+          "file": "magaza.spec.ts",
+          "line": 202,
+          "column": 5
+        },
+        {
+          "title": "ödeme başarısız olursa stok geri döner ve sepet korunur",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3528,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:14.720Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-c8aa8ae027832dedb6f1",
+          "file": "magaza.spec.ts",
+          "line": 247,
+          "column": 5
+        },
+        {
+          "title": "iyzico bildirimi (webhook) ödemeyi onaylar, sahte imza reddedilir",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1897,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:18.267Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-e54401ba576fc75a5016",
+          "file": "magaza.spec.ts",
+          "line": 262,
+          "column": 5
+        },
+        {
+          "title": "yönetici siparişi hazırlar, kargolar ve teslim eder; müşteri takip eder",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3561,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:20.176Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-ca40a9c500e90eb80630",
+          "file": "magaza.spec.ts",
+          "line": 286,
+          "column": 5
+        },
+        {
+          "title": "müşteri iade talebi oluşturur, yönetici kısmi ve tam iade yapar",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3746,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:23.752Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-e59d5cfdbee53d120c69",
+          "file": "magaza.spec.ts",
+          "line": 315,
+          "column": 5
+        },
+        {
+          "title": "yönetici ödenmiş siparişi iptal eder, aynı gün iptali yapılır ve stok geri gelir",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1837,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:27.517Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-9c25fb7f8fa3df39a280",
+          "file": "magaza.spec.ts",
+          "line": 346,
+          "column": 5
+        },
+        {
+          "title": "üye olur, favoriye ekler, kayıtlı adresle sipariş verir, yorum yazar",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11036,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:29.375Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-1c5513584bd4058064e3",
+          "file": "magaza.spec.ts",
+          "line": 362,
+          "column": 5
+        },
+        {
+          "title": "indirim kodu sepete uygulanır ve ödemeye yansır",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5651,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:40.432Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-ff30f2f5be444aae8903",
+          "file": "magaza.spec.ts",
+          "line": 416,
+          "column": 5
+        },
+        {
+          "title": "misafir sipariş takibi ve şifre yenileme",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2832,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:46.095Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-90d4a9e7ab9f5e9fb0f3",
+          "file": "magaza.spec.ts",
+          "line": 443,
+          "column": 5
+        },
+        {
+          "title": "yönetici yeni ürün ekler, görsel yükler ve ürün mağazada görünür",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4792,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:48.939Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-06611c16058f3defb15e",
+          "file": "magaza.spec.ts",
+          "line": 472,
+          "column": 5
+        },
+        {
+          "title": "bilgi sayfaları ve site haritası",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 975,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:53.751Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-dffaf3ceeb64abb4f4f5",
+          "file": "magaza.spec.ts",
+          "line": 520,
+          "column": 5
+        },
+        {
+          "title": "Shopier: panelden bağlanır, kartla ödeme alınır, sahte dönüş reddedilir, elle onay ve iade kaydı",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12751,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:06:54.739Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-99e23473fe95c66cbfad",
+          "file": "magaza.spec.ts",
+          "line": 572,
+          "column": 5
+        },
+        {
+          "title": "üye olan müşteri yönetim paneline giremez",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6250,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:07:07.509Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a343b2f15905a93e29aa-6536ed82edcaed5e4601",
+          "file": "magaza.spec.ts",
+          "line": 693,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T18:05:56.768Z",
+    "duration": 77082.443,
+    "expected": 16,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

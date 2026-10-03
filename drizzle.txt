@@ -1,0 +1,25 @@
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/home/runner/work/Motorcu-chopper/Motorcu-chopper/drizzle.config.ts'
+20 tables
+addresses 12 columns 1 indexes 1 fks
+cart_items 7 columns 1 indexes 2 fks
+carts 5 columns 1 indexes 1 fks
+categories 7 columns 1 indexes 0 fks
+discount_codes 11 columns 1 indexes 0 fks
+email_log 7 columns 1 indexes 0 fks
+favorites 3 columns 0 indexes 2 fks
+order_events 7 columns 1 indexes 1 fks
+order_items 20 columns 1 indexes 3 fks
+orders 40 columns 6 indexes 1 fks
+password_resets 5 columns 0 indexes 1 fks
+product_images 8 columns 1 indexes 1 fks
+products 24 columns 2 indexes 1 fks
+rate_limits 3 columns 0 indexes 0 fks
+reviews 8 columns 1 indexes 2 fks
+sessions 4 columns 1 indexes 1 fks
+settings 3 columns 0 indexes 0 fks
+uploads 5 columns 0 indexes 0 fks
+users 10 columns 1 indexes 0 fks
+variants 8 columns 1 indexes 1 fks
+
+No schema changes, nothing to migrate 😴

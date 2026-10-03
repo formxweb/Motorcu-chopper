@@ -1,0 +1,8 @@
+kurulum=0
+drizzle=0
+tsc=0
+setup=0
+setup_neon=0
+build=0
+iyzico_sandbox=0
+e2e=0
