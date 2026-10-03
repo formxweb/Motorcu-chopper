@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { asc, eq } from 'drizzle-orm';
-import { OrderActions } from '@/components/admin/OrderActions';
+import { ConfirmPaymentForm, OrderActions } from '@/components/admin/OrderActions';
 import { AddressCard, ItemsList, StatusBadge, Timeline, TotalsList } from '@/components/OrderBits';
 import { db } from '@/db';
 import { orderEvents, orderItems, orders } from '@/db/schema';
 import { cardName, formatDate, formatPhone } from '@/lib/format';
 import { formatTL } from '@/lib/money';
+import { paymentProviderOf } from '@/lib/orders';
 import { getSettings } from '@/lib/settings';
 import { isUuid } from '@/lib/utils';
 
@@ -23,6 +24,8 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
     getSettings(),
   ]);
   const pi = o.paymentInfo;
+  const provider = paymentProviderOf(o);
+  const providerName = provider === 'shopier' ? 'Shopier' : 'iyzico';
   const refundable = Math.max(0, (o.paidTotal ?? o.total) - o.refundTotal);
   const ship = o.shippingAddress;
   const label = `${ship.firstName} ${ship.lastName}\n${ship.line}\n${ship.district} / ${ship.city} ${ship.zip}\n${ship.phone}`;
@@ -74,7 +77,10 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
           <section className="panel">
             <h2>İşlemler</h2>
             {o.status === 'pending_payment' || o.status === 'payment_failed' ? (
-              <p className="muted">Bu siparişin ödemesi tamamlanmadı, işlem yapılamaz.</p>
+              <>
+                <p className="muted">Bu siparişin ödemesi tamamlanmadı, işlem yapılamaz.</p>
+                <ConfirmPaymentForm orderId={o.id} provider={provider} />
+              </>
             ) : (
               <OrderActions
                 orderId={o.id}
@@ -84,6 +90,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                 carrierName={o.carrier}
                 trackingNumber={o.trackingNumber}
                 refundable={refundable}
+                provider={provider}
               />
             )}
           </section>
@@ -117,7 +124,12 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
           <section className="panel">
             <h2>Ödeme</h2>
             <dl className="kv">
-              <dt>iyzico ödeme no</dt>
+              <dt>Altyapı</dt>
+              <dd data-testid="odeme-saglayici">
+                {providerName}
+                {pi?.manual ? ' (elle onaylandı)' : ''}
+              </dd>
+              <dt>{providerName} ödeme no</dt>
               <dd className="sel">{o.paymentId || '-'}</dd>
               <dt>Kart</dt>
               <dd>{pi?.lastFourDigits ? `${cardName(pi.cardAssociation, pi.cardFamily)} •••• ${pi.lastFourDigits}` : '-'}</dd>

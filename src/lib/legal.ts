@@ -36,7 +36,13 @@ export type ContractContext = {
   total: number;
   date: Date;
   orderNumber?: string;
+  /** Ödeme altyapısının adı ("Shopier", "iyzico"). */
+  paymentLabel?: string;
 };
+
+function viaProvider(label?: string): string {
+  return label ? ` (${e(label)} güvenli ödeme altyapısı)` : '';
+}
 
 function buyerField(ctx: ContractContext, key: keyof ContractBuyer, placeholder: string): string {
   if (ctx.buyer) return e(ctx.buyer[key] || '-');
@@ -77,7 +83,7 @@ function itemsBlock(ctx: ContractContext): string {
 ${ctx.discountTotal ? `<tr><th>İndirim</th><td>−${formatTL(ctx.discountTotal)}</td></tr>` : ''}
 <tr><th>Kargo bedeli</th><td>${ctx.shippingTotal ? formatTL(ctx.shippingTotal) : 'Ücretsiz'}</td></tr>
 <tr><th>Toplam (KDV dahil)</th><td><strong>${formatTL(ctx.total)}</strong></td></tr>
-<tr><th>Ödeme şekli</th><td>Kredi kartı / banka kartı (iyzico güvenli ödeme altyapısı)</td></tr>
+<tr><th>Ödeme şekli</th><td>Kredi kartı / banka kartı${viaProvider(ctx.paymentLabel)}</td></tr>
 </tbody></table>`;
 }
 
@@ -137,7 +143,7 @@ export function contractsHtml(ctx: ContractContext): string {
 
 /* ---------- Bilgi sayfaları ---------- */
 
-export type InfoPage = { slug: string; title: string; description: string; html: (s: StoreSettings) => string };
+export type InfoPage = { slug: string; title: string; description: string; html: (s: StoreSettings, paymentLabel?: string) => string };
 
 function sellerLine(s: StoreSettings): string {
   return `${filled(s.seller.title, 'Satıcı unvanı')}, ${filled(s.seller.address, 'Satıcı adresi')}`;
@@ -197,23 +203,23 @@ ${s.instagram ? `<tr><th>Instagram</th><td><a href="${e(s.instagram)}" target="_
     slug: 'on-bilgilendirme-formu',
     title: 'Ön bilgilendirme formu',
     description: 'Sipariş öncesi bilgilendirme metni.',
-    html: (s) =>
+    html: (s, pay) =>
       preliminaryInfoHtml({ settings: s, buyer: null, items: [], subtotal: 0, discountTotal: 0, shippingTotal: 0, total: 0, date: new Date() }).replace(
         /<h2>3\. Ürünler, fiyatlar ve ödeme<\/h2>[\s\S]*?<h2>4/,
-        '<h2>3. Ürünler, fiyatlar ve ödeme</h2><p>Siparişteki ürünler, KDV dahil fiyatları, kargo bedeli ve toplam tutar ödeme adımında gösterilir. Ödeme kredi kartı veya banka kartı ile iyzico güvenli ödeme altyapısı üzerinden yapılır.</p><h2>4',
+        `<h2>3. Ürünler, fiyatlar ve ödeme</h2><p>Siparişteki ürünler, KDV dahil fiyatları, kargo bedeli ve toplam tutar ödeme adımında gösterilir. Ödeme kredi kartı veya banka kartı ile${pay ? ` ${e(pay)}` : ''} güvenli ödeme altyapısı üzerinden yapılır.</p><h2>4`,
       ),
   },
   {
     slug: 'kvkk',
     title: 'Kişisel verilerin korunması',
     description: 'KVKK aydınlatma metni.',
-    html: (s) => `<p>Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) md. 10 uyarınca veri sorumlusu sıfatıyla ${sellerLine(s)} tarafından hazırlanmıştır.</p>
+    html: (s, pay) => `<p>Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) md. 10 uyarınca veri sorumlusu sıfatıyla ${sellerLine(s)} tarafından hazırlanmıştır.</p>
 <h2>İşlenen veriler</h2>
-<p>Kimlik (ad, soyad, isteğe bağlı T.C. kimlik no), iletişim (e-posta, telefon, adres), müşteri işlem (sipariş, iade ve talep kayıtları), işlem güvenliği (IP adresi, oturum kayıtları) ve pazarlama izni verdiysen pazarlama verileri. Kart bilgilerin bizim sistemimize ulaşmaz; ödeme doğrudan iyzico'nun güvenli sayfasında yapılır.</p>
+<p>Kimlik (ad, soyad, isteğe bağlı T.C. kimlik no), iletişim (e-posta, telefon, adres), müşteri işlem (sipariş, iade ve talep kayıtları), işlem güvenliği (IP adresi, oturum kayıtları) ve pazarlama izni verdiysen pazarlama verileri. Kart bilgilerin bizim sistemimize ulaşmaz; ödeme doğrudan ödeme kuruluşunun${pay ? ` (${e(pay)})` : ''} güvenli sayfasında yapılır.</p>
 <h2>İşleme amaçları ve hukuki sebepler</h2>
 <p>Verilerin; siparişini almak, ödemeni doğrulamak, ürünü teslim etmek, fatura düzenlemek, iade ve şikâyetlerini yönetmek ve yasal yükümlülüklerimizi yerine getirmek amacıyla KVKK md. 5/2-c (sözleşmenin kurulması ve ifası), md. 5/2-ç (hukuki yükümlülük) ve md. 5/2-f (meşru menfaat) hukuki sebeplerine dayanarak işlenir. Pazarlama iletileri yalnızca açık rızan ile gönderilir.</p>
 <h2>Aktarım</h2>
-<p>Verilerin, siparişin teslimi için kargo firmasına, ödeme için iyzico Ödeme Hizmetleri A.Ş.'ye, fatura için mali müşavirimize ve e-fatura sağlayıcımıza, yasal talep halinde yetkili kamu kurumlarına aktarılır. Sitenin barındırma, veritabanı ve e-posta hizmet sağlayıcılarının sunucuları yurt dışında bulunabilir; bu aktarımlar KVKK md. 9 kapsamında standart sözleşmeler ile yapılır.</p>
+<p>Verilerin, siparişin teslimi için kargo firmasına, ödeme için ödeme kuruluşuna${pay === 'iyzico' ? " (iyzico Ödeme Hizmetleri A.Ş.)" : pay ? ` (${e(pay)})` : ''}, fatura için mali müşavirimize ve e-fatura sağlayıcımıza, yasal talep halinde yetkili kamu kurumlarına aktarılır. Sitenin barındırma, veritabanı ve e-posta hizmet sağlayıcılarının sunucuları yurt dışında bulunabilir; bu aktarımlar KVKK md. 9 kapsamında standart sözleşmeler ile yapılır.</p>
 <h2>Saklama süresi</h2>
 <p>Sipariş ve fatura kayıtları ilgili mevzuatta öngörülen süreler (Vergi Usul Kanunu ve Türk Ticaret Kanunu gereği 10 yıl) boyunca saklanır, süre sonunda silinir veya anonim hale getirilir.</p>
 <h2>Hakların</h2>

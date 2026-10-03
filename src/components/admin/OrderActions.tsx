@@ -31,6 +31,7 @@ export function OrderActions({
   carrierName,
   trackingNumber,
   refundable,
+  provider,
 }: {
   orderId: string;
   status: OrderStatus;
@@ -39,7 +40,15 @@ export function OrderActions({
   carrierName: string;
   trackingNumber: string;
   refundable: number;
+  provider: 'iyzico' | 'shopier';
 }) {
+  const shopierNote =
+    provider === 'shopier' ? (
+      <p className="hint" data-testid="shopier-iade-notu">
+        Bu sipariş Shopier ile ödendi. Shopier&apos;in iade bağlantısı olmadığından para otomatik iade edilmez: işlemi burada kaydet, sonra Shopier panelinden siparişi bulup aynı tutarı iade et.
+      </p>
+    ) : null;
+
   const canShip = status === 'paid' || status === 'preparing' || status === 'shipped';
   const canCancel = status === 'paid' || status === 'preparing' || status === 'shipped';
   const canRefund = ['shipped', 'delivered', 'return_requested', 'refunded'].includes(status) && refundable > 0;
@@ -103,7 +112,8 @@ export function OrderActions({
       {canRefund ? (
         <details className="op" open={status === 'return_requested'}>
           <summary>{status === 'return_requested' ? 'İadeyi onayla ve ücreti iade et' : 'Ücret iadesi yap'}</summary>
-          <OpForm key={`iade-${refundable}`} orderId={orderId} op="iade" submit="İadeyi gönder" danger testId="op-iade">
+          <OpForm key={`iade-${refundable}`} orderId={orderId} op="iade" submit={provider === 'shopier' ? 'İadeyi kaydet' : 'İadeyi gönder'} danger testId="op-iade">
+            {shopierNote}
             <div className="grid-2">
               <label className="field" htmlFor="amount">
                 <span>İade tutarı (TL)</span>
@@ -120,7 +130,7 @@ export function OrderActions({
             </label>
             <label className="check">
               <input type="checkbox" name="onay" />
-              <span>Eminim, bu tutar kartına iade edilsin</span>
+              <span>{provider === 'shopier' ? 'Eminim, iade kaydedilsin' : 'Eminim, bu tutar kartına iade edilsin'}</span>
             </label>
           </OpForm>
         </details>
@@ -130,6 +140,7 @@ export function OrderActions({
         <details className="op" open={requestType === 'cancel'}>
           <summary>Siparişi iptal et ve ücreti iade et</summary>
           <OpForm orderId={orderId} op="iptal" submit="İptal et ve iade et" danger testId="op-iptal">
+            {shopierNote}
             <label className="field" htmlFor="reason">
               <span>Müşteriye gidecek açıklama (isteğe bağlı)</span>
               <input id="reason" name="reason" placeholder="Talebin üzerine iptal edildi." />
@@ -164,5 +175,28 @@ export function OrderActions({
         </OpForm>
       </details>
     </div>
+  );
+}
+
+/** Ödeme panelde görünüp siteye düşmediyse siparişi elle "ödendi" yapar. */
+export function ConfirmPaymentForm({ orderId, provider }: { orderId: string; provider: 'iyzico' | 'shopier' }) {
+  const name = provider === 'shopier' ? 'Shopier' : 'iyzico';
+  return (
+    <details className="op">
+      <summary>Ödeme {name} panelinde görünüyorsa elle onayla</summary>
+      <OpForm orderId={orderId} op="odeme-onay" submit="Ödemeyi onayla" testId="op-odeme-onay">
+        <p className="hint">
+          Müşteri ödemeyi yaptı ama ödeme sayfasından siteye dönmediyse sipariş burada bekler. Önce {name} panelinde ödemenin gerçekten alındığını kontrol et.
+        </p>
+        <label className="field" htmlFor="paymentRef">
+          <span>{name} işlem / sipariş numarası</span>
+          <input id="paymentRef" name="paymentRef" autoComplete="off" />
+        </label>
+        <label className="check">
+          <input type="checkbox" name="onay" />
+          <span>Eminim, ödeme {name} panelinde görünüyor</span>
+        </label>
+      </OpForm>
+    </details>
   );
 }

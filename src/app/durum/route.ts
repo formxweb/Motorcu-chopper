@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSql } from '@/db';
 import { pooledDatabaseUrl } from '@/db/url';
 import { appUrl, iyzicoConfig, smtpReady, storageMode } from '@/lib/env';
+import { getPaymentSetup } from '@/lib/payment';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,11 +48,21 @@ export async function GET() {
     }
   }
   const iz = iyzicoConfig();
+  let odeme: Record<string, unknown> = { altyapi: 'yok' };
+  if (db.baglanti === 'tamam') {
+    try {
+      const pay = await getPaymentSetup();
+      odeme = { altyapi: pay.ready ? pay.label : 'yok', test_modu: pay.testMode };
+    } catch {
+      odeme = { altyapi: 'okunamadı' };
+    }
+  }
   return NextResponse.json(
     {
       site_adresi: appUrl(),
       app_url_tanimli: !!process.env.APP_URL,
       veritabani: db,
+      odeme,
       iyzico: { anahtar: !!(iz.apiKey && iz.secretKey), mod: iz.sandbox ? 'test' : 'canlı', adres: iz.baseUrl },
       eposta_smtp: smtpReady(),
       gorsel_depolama: storageMode(),

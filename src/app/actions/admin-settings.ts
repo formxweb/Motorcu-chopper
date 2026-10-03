@@ -7,6 +7,7 @@ import { sessions, users } from '@/db/schema';
 import { assertAdmin, hashPassword, normalizeEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form-state';
 import { parseTL } from '@/lib/money';
+import { getShopierConfig, saveShopierConfig } from '@/lib/payment';
 import { getSettings, saveSettings } from '@/lib/settings';
 import type { Carrier, StoreSettings } from '@/lib/settings-defaults';
 import { bool, int, isUuid, slugify, str } from '@/lib/utils';
@@ -66,6 +67,28 @@ export async function saveStoreSettings(_prev: FormState, fd: FormData): Promise
   await saveSettings(patch);
   revalidatePath('/', 'layout');
   return { ok: true, message: 'Ayarlar kaydedildi.', at: Date.now() };
+}
+
+export async function saveShopierSettings(_prev: FormState, fd: FormData): Promise<FormState> {
+  await assertAdmin();
+  const fail = (message: string): FormState => ({ ok: false, message, at: Date.now() });
+  const current = await getShopierConfig();
+  if (current.source === 'env') return fail('Shopier anahtarları Vercel ortam değişkenlerinden (SHOPIER_API_KEY, SHOPIER_API_SECRET) geliyor. Değiştirmek için oradan düzenle.');
+  const websiteIndex = int(fd, 'shopierWebsiteIndex', 1);
+  if (bool(fd, 'shopierRemove')) {
+    await saveShopierConfig({ apiKey: '', websiteIndex });
+    revalidatePath('/', 'layout');
+    return { ok: true, message: 'Shopier bağlantısı kaldırıldı.', at: Date.now() };
+  }
+  const apiKey = str(fd, 'shopierApiKey').replace(/\s/g, '');
+  const apiSecret = str(fd, 'shopierApiSecret').replace(/\s/g, '');
+  if (!apiKey) return fail('API kullanıcı alanını doldur.');
+  const keepSecret = !apiSecret && !!current.apiSecret && apiKey === current.apiKey;
+  if (!apiSecret && !keepSecret) return fail('API şifre alanını doldur.');
+  if (apiKey.length < 8 || (apiSecret && apiSecret.length < 8)) return fail('API kullanıcı veya şifre çok kısa. Shopier panelinden tamamını kopyala.');
+  await saveShopierConfig({ apiKey, apiSecret: apiSecret || undefined, websiteIndex });
+  revalidatePath('/', 'layout');
+  return { ok: true, message: 'Shopier bağlantısı kaydedildi. Kartla ödemeler artık Shopier üzerinden alınacak.', at: Date.now() };
 }
 
 export async function addAdmin(_prev: FormState, fd: FormData): Promise<FormState> {

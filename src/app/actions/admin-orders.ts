@@ -7,6 +7,7 @@ import { parseTL } from '@/lib/money';
 import {
   adminAddNote,
   adminCancel,
+  adminConfirmPayment,
   adminDeliver,
   adminRefund,
   adminRejectRequest,
@@ -56,6 +57,13 @@ export async function orderAction(_prev: FormState, fd: FormData): Promise<FormS
       }
       case 'reddet':
         r = await adminRejectRequest(id, str(fd, 'note'), actor);
+        break;
+      case 'odeme-onay':
+        if (!bool(fd, 'onay')) {
+          r = { ok: false, message: 'Onay için "Eminim" kutusunu işaretle.' };
+          break;
+        }
+        r = await adminConfirmPayment(id, str(fd, 'paymentRef'), actor);
         break;
       case 'not':
         r = await adminAddNote(id, str(fd, 'message'), bool(fd, 'isPublic'), bool(fd, 'notify'), actor);

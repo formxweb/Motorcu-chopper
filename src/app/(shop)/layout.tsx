@@ -4,6 +4,7 @@ import { Header } from '@/components/shop/Header';
 import { getCurrentUser } from '@/lib/auth';
 import { getCartCount } from '@/lib/cart';
 import { activeCategories } from '@/lib/catalog';
+import { getPaymentSetup } from '@/lib/payment';
 import { getSettings } from '@/lib/settings';
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
@@ -50,7 +51,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
     );
   }
 
-  const [cartCount, categories] = await Promise.all([getCartCount(), activeCategories()]);
+  const [cartCount, categories, pay] = await Promise.all([getCartCount(), activeCategories(), getPaymentSetup()]);
   const cats = categories.filter((c) => c.count > 0).map((c) => ({ slug: c.slug, name: c.name }));
 
   return (
@@ -67,7 +68,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <main id="icerik" className="site-main">
         {children}
       </main>
-      <Footer settings={settings} categories={cats} />
+      <Footer settings={settings} categories={cats} paymentLabel={pay.label} />
     </>
   );
 }

@@ -70,6 +70,10 @@ export type OrderStatus =
   | 'refunded';
 
 export type PaymentInfo = {
+  /** Ödemenin alındığı altyapı (eski kayıtlarda yok: iyzico). */
+  provider?: 'iyzico' | 'shopier';
+  /** Yönetici tarafından elle onaylandıysa. */
+  manual?: boolean;
   cardFamily?: string;
   cardAssociation?: string;
   cardType?: string;

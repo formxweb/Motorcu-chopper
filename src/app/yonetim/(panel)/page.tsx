@@ -4,10 +4,11 @@ import { runCleanup } from '@/app/actions/admin-orders';
 import { StatusBadge } from '@/components/OrderBits';
 import { db } from '@/db';
 import { orders, products, variants, type OrderStatus } from '@/db/schema';
-import { appUrl, iyzicoConfig, iyzicoReady, smtpReady, storageMode } from '@/lib/env';
+import { appUrl, smtpReady, storageMode } from '@/lib/env';
 import { formatShortDate } from '@/lib/format';
 import { formatTL } from '@/lib/money';
 import { cleanupExpiredOrders } from '@/lib/orders';
+import { getPaymentSetup } from '@/lib/payment';
 import { getSettings, missingSellerFields } from '@/lib/settings';
 
 const PAID: OrderStatus[] = ['paid', 'preparing', 'shipped', 'delivered', 'return_requested', 'refunded', 'cancelled'];
@@ -26,7 +27,7 @@ export default async function Dashboard() {
   } catch (e) {
     console.error('[özet] temizlik', e);
   }
-  const settings = await getSettings();
+  const [settings, pay] = await Promise.all([getSettings(), getPaymentSetup()]);
   const revenue = (from: Date) =>
     db
       .select({
@@ -51,11 +52,18 @@ export default async function Dashboard() {
     db.select().from(orders).where(ne(orders.status, 'pending_payment')).orderBy(desc(orders.createdAt)).limit(8),
   ]);
 
-  const iz = iyzicoConfig();
   const seller = missingSellerFields(settings);
   const checklist = [
-    { ok: iyzicoReady(), title: 'iyzico API anahtarları', hint: iyzicoReady() ? (iz.sandbox ? 'Test (sandbox) anahtarları kullanılıyor. Canlı anahtarlar gelince IYZICO_BASE_URL ve anahtarları değiştir.' : 'Canlı ödeme açık.') : 'IYZICO_API_KEY ve IYZICO_SECRET_KEY ortam değişkenlerini ekle.' },
-    { ok: iyzicoReady() && !iz.sandbox, title: 'Canlı ödeme', hint: 'iyzico üye işyeri başvurun onaylanınca canlı anahtarları gir.' },
+    {
+      ok: pay.ready && !pay.testMode,
+      title: 'Kartla ödeme',
+      hint: !pay.ready
+        ? 'Ayarlar > Shopier ile kartla ödeme bölümüne Shopier API bilgilerini gir (şirketin varsa iyzico da kullanılabilir).'
+        : pay.testMode
+          ? 'iyzico test modunda: gerçek ödeme alınmıyor. Canlı anahtarları gir ya da Shopier bağla.'
+          : `${pay.label} ile ödeme açık.`,
+      href: '/yonetim/ayarlar#shopier',
+    },
     { ok: seller.length === 0, title: 'Satıcı ve iletişim bilgileri', hint: seller.length ? `Eksik: ${seller.join(', ')}. Sözleşmelerde görünür.` : 'Tamam.' },
     { ok: smtpReady(), title: 'E-posta gönderimi', hint: smtpReady() ? 'SMTP ayarlı.' : 'SMTP_HOST, SMTP_USER, SMTP_PASS ekle. Şimdilik e-postalar yalnızca E-postalar sayfasına kaydediliyor.' },
     { ok: true, title: 'Görsel depolama', hint: storageMode() === 'supabase' ? 'Supabase Storage ayarlı.' : storageMode() === 'database' ? 'Fotoğraflar veritabanında saklanıyor. Yüzlerce ürün fotoğrafı olacaksa Supabase Storage eklenebilir (SUPABASE_URL, SUPABASE_SECRET_KEY).' : 'Yerel klasör (geliştirme).' },
@@ -200,7 +208,7 @@ export default async function Dashboard() {
               {checklist.map((c) => (
                 <li key={c.title} className={c.ok ? 'ok' : ''}>
                   <span>
-                    {c.title}
+                    {'href' in c && c.href && !c.ok ? <Link href={c.href}>{c.title}</Link> : c.title}
                     <small>{c.hint}</small>
                   </span>
                 </li>

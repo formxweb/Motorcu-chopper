@@ -1,17 +1,24 @@
 import { asc, eq } from 'drizzle-orm';
-import { addAdmin, removeAdmin, saveStoreSettings } from '@/app/actions/admin-settings';
+import { addAdmin, removeAdmin, saveShopierSettings, saveStoreSettings } from '@/app/actions/admin-settings';
 import { ActionForm, ConfirmButton } from '@/components/forms';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { requireAdmin } from '@/lib/auth';
 import { appUrl, iyzicoConfig, iyzicoReady, smtpReady, storageMode } from '@/lib/env';
 import { kurusToInput } from '@/lib/money';
+import { getPaymentSetup, getShopierConfig, shopierCallbackPath } from '@/lib/payment';
 import { getSettings } from '@/lib/settings';
 
 export default async function SettingsPage() {
   const me = await requireAdmin();
-  const [s, admins] = await Promise.all([getSettings(), db.select().from(users).where(eq(users.role, 'admin')).orderBy(asc(users.createdAt))]);
+  const [s, admins, shopier, pay] = await Promise.all([
+    getSettings(),
+    db.select().from(users).where(eq(users.role, 'admin')).orderBy(asc(users.createdAt)),
+    getShopierConfig(),
+    getPaymentSetup(),
+  ]);
   const iz = iyzicoConfig();
+  const callbackUrl = `${appUrl()}${shopierCallbackPath()}`;
 
   return (
     <>
@@ -148,6 +155,64 @@ export default async function SettingsPage() {
         </div>
 
         <div>
+          <section className="panel" id="shopier">
+            <h2>Shopier ile kartla ödeme</h2>
+            <dl className="kv">
+              <dt>Kullanılan ödeme altyapısı</dt>
+              <dd data-testid="odeme-altyapisi">{pay.ready ? pay.label + (pay.testMode ? ' (test modu)' : '') : 'Yok, ödeme kapalı'}</dd>
+              <dt>Shopier</dt>
+              <dd>{shopier.source === 'env' ? 'Bağlı (Vercel ortam değişkenleri)' : shopier.source === 'panel' ? 'Bağlı' : 'Bağlı değil'}</dd>
+              <dt>Geri dönüş adresi</dt>
+              <dd className="sel" data-testid="shopier-geri-donus">{callbackUrl}</dd>
+            </dl>
+            <ol className="hint steps">
+              <li>shopier.com&apos;da satıcı hesabı aç (bireysel hesap da olur) ve hesabını onaylat.</li>
+              <li>
+                Shopier panelinde <strong>Entegrasyonlar → Modül Yönetimi → Modül Ayarları</strong> sayfasını aç.
+              </li>
+              <li>
+                <strong>Kayıtlı Alan Adları</strong> kısmına <span className="sel">{appUrl()}</span> adresini, <strong>Geri Dönüş URL</strong> kısmına yukarıdaki geri dönüş adresini ekle.
+              </li>
+              <li>Aynı sayfadaki API kullanıcı ve API şifreyi aşağıya yapıştırıp kaydet.</li>
+            </ol>
+            {shopier.source === 'env' ? (
+              <p className="hint">Anahtarlar Vercel ortam değişkenlerinden geliyor (SHOPIER_API_KEY, SHOPIER_API_SECRET).</p>
+            ) : (
+              <ActionForm action={saveShopierSettings} submitLabel="Kaydet" testId="ayar-shopier">
+                <label className="field" htmlFor="shopierApiKey">
+                  <span>API kullanıcı</span>
+                  <input id="shopierApiKey" name="shopierApiKey" defaultValue={shopier.apiKey} autoComplete="off" spellCheck={false} />
+                </label>
+                <label className="field" htmlFor="shopierApiSecret">
+                  <span>API şifre</span>
+                  <input
+                    id="shopierApiSecret"
+                    name="shopierApiSecret"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder={shopier.apiSecret ? 'Kayıtlı. Değiştirmek için yenisini yaz.' : ''}
+                  />
+                </label>
+                <label className="field" htmlFor="shopierWebsiteIndex">
+                  <span>Geri dönüş adresinin sırası (Shopier&apos;de kaçıncı satırda)</span>
+                  <select id="shopierWebsiteIndex" name="shopierWebsiteIndex" defaultValue={String(shopier.websiteIndex)}>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n}. satır
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {shopier.source === 'panel' ? (
+                  <button type="submit" name="shopierRemove" value="1" className="btn btn-ghost btn-sm" data-testid="shopier-kaldir">
+                    Shopier bağlantısını kaldır
+                  </button>
+                ) : null}
+              </ActionForm>
+            )}
+            <p className="hint">Shopier&apos;de deneme modu yok. Bağladıktan sonra kendi kartınla küçük bir sipariş verip panelden iptal ederek dene. İadeler Shopier panelinden yapılır, sitede yalnızca kaydı tutulur.</p>
+          </section>
+
           <section className="panel">
             <h2>Ödeme ve altyapı</h2>
             <dl className="kv">
@@ -164,7 +229,7 @@ export default async function SettingsPage() {
               <dt>Site adresi</dt>
               <dd>{appUrl()}</dd>
             </dl>
-            <p className="hint">Bu değerler Vercel &gt; Settings &gt; Environment Variables bölümünden değiştirilir. Bildirim adresini iyzico panelinde Ayarlar &gt; Bildirimler kısmına gir.</p>
+            <p className="hint">Bu değerler Vercel &gt; Settings &gt; Environment Variables bölümünden değiştirilir. iyzico kullanıyorsan bildirim adresini iyzico panelinde Ayarlar &gt; Bildirimler kısmına gir. Shopier bağlıysa ödemeler Shopier ile alınır.</p>
           </section>
 
           <section className="panel">

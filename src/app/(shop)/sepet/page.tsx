@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { removeCartItem, removeDiscount, setCartQuantity } from '@/app/actions/cart';
 import { DiscountForm } from '@/components/shop/DiscountForm';
 import { getCart } from '@/lib/cart';
-import { iyzicoReady } from '@/lib/env';
+import { getPaymentSetup } from '@/lib/payment';
 import { formatTL } from '@/lib/money';
 import { computeTotals, evaluateDiscount } from '@/lib/pricing';
 import { getSettings } from '@/lib/settings';
@@ -21,7 +21,7 @@ const PAYMENT_NOTES: Record<string, string> = {
 export default async function CartPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
   const odeme = typeof sp.odeme === 'string' ? sp.odeme : '';
-  const [cart, settings] = await Promise.all([getCart(), getSettings()]);
+  const [cart, settings, pay] = await Promise.all([getCart(), getSettings(), getPaymentSetup()]);
   const discount = cart.discountCode ? await evaluateDiscount(cart.discountCode, cart.subtotal) : null;
   const totals = computeTotals(cart.subtotal, discount && discount.ok ? discount.amount : 0, settings);
 
@@ -121,14 +121,14 @@ export default async function CartPage({ searchParams }: { searchParams: SP }) {
             {!discount || !discount.ok ? <DiscountForm /> : null}
             {cart.hasProblems ? (
               <p className="msg msg-err">Sepetindeki bazı ürünlerin stoğu değişti. Adetleri düzenleyip devam et.</p>
-            ) : iyzicoReady() ? (
+            ) : pay.ready ? (
               <Link href="/odeme" className="btn btn-primary btn-lg full" data-testid="odemeye-gec">
                 Siparişi tamamla
               </Link>
             ) : (
               <p className="msg msg-err">Online ödeme henüz aktif değil.</p>
             )}
-            <p className="small muted">Ödeme, iyzico güvenli ödeme sayfasında kartla yapılır. Kart bilgilerin bize ulaşmaz.</p>
+            <p className="small muted">Ödeme, {pay.label ? `${pay.label} ` : ''}güvenli ödeme sayfasında kartla yapılır. Kart bilgilerin bize ulaşmaz.</p>
           </aside>
         </div>
       )}

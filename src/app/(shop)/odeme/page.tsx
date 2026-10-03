@@ -8,17 +8,17 @@ import { addresses } from '@/db/schema';
 import { getCurrentUser } from '@/lib/auth';
 import { getCart } from '@/lib/cart';
 import { CITIES } from '@/lib/cities';
-import { iyzicoConfig, iyzicoReady } from '@/lib/env';
 import { contractsHtml } from '@/lib/legal';
 import { formatTL } from '@/lib/money';
 import { lineOptionsText } from '@/lib/orders';
+import { getPaymentSetup } from '@/lib/payment';
 import { computeTotals, evaluateDiscount } from '@/lib/pricing';
 import { getSettings } from '@/lib/settings';
 
 export const metadata: Metadata = { title: 'Ödeme', robots: { index: false } };
 
 export default async function CheckoutPage() {
-  const [cart, settings, user] = await Promise.all([getCart(), getSettings(), getCurrentUser()]);
+  const [cart, settings, user, pay] = await Promise.all([getCart(), getSettings(), getCurrentUser(), getPaymentSetup()]);
   if (!cart.lines.length || cart.hasProblems) redirect('/sepet');
   const discount = cart.discountCode ? await evaluateDiscount(cart.discountCode, cart.subtotal) : null;
   const totals = computeTotals(cart.subtotal, discount && discount.ok ? discount.amount : 0, settings);
@@ -34,8 +34,8 @@ export default async function CheckoutPage() {
     shippingTotal: totals.shippingTotal,
     total: totals.total,
     date: new Date(),
+    paymentLabel: pay.label,
   });
-  const cfg = iyzicoConfig();
 
   return (
     <div className="wrap checkout">
@@ -45,7 +45,7 @@ export default async function CheckoutPage() {
         <span>Teslimat ve ödeme</span>
       </nav>
       <h1>Siparişi tamamla</h1>
-      {iyzicoReady() && cfg.sandbox ? (
+      {pay.ready && pay.testMode ? (
         <p className="msg msg-warn" data-testid="test-modu">
           Ödeme sistemi test modunda. Bu sayfadan verilen siparişlerde gerçek ödeme alınmaz, gerçek kartlar çalışmaz.
         </p>
@@ -57,6 +57,7 @@ export default async function CheckoutPage() {
           cities={CITIES}
           contractsHtml={contracts}
           totalText={formatTL(totals.total)}
+          paymentLabel={pay.label}
         />
         <aside className="summary" aria-label="Sipariş özeti">
           <h2>Siparişin</h2>

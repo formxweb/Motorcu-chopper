@@ -537,3 +537,142 @@ test('bilgi sayfaları ve site haritası', async ({ request }) => {
   expect(JSON.stringify(d)).not.toContain('mc:mc');
   await page.close();
 });
+
+/* ---------- Shopier ---------- */
+
+const SHOPIER = 'http://localhost:4020';
+
+async function shopierCalls(): Promise<{ fields: Record<string, string>; error: string }[]> {
+  const res = await fetch(`${SHOPIER}/_kayit`);
+  return res.json();
+}
+
+async function shopierCheckout(page: Page): Promise<string> {
+  await go(page, '/sepet');
+  await page.getByTestId('odemeye-gec').click();
+  await page.waitForURL('**/odeme');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByTestId('test-modu')).toHaveCount(0);
+  await page.locator('#email').fill('shopier@example.com');
+  await page.locator('#phone').fill('0532 111 22 33');
+  await page.locator('#s_firstName').fill('Ayşe');
+  await page.locator('#s_lastName').fill('Demir');
+  await page.locator('#s_city').selectOption('Ankara');
+  await page.locator('#s_district').fill('Çankaya');
+  await page.locator('#s_line').fill('Kızılay Mah. Atatürk Bulvarı No 10 Daire 4');
+  await page.getByTestId('sozlesme-onay').check();
+  await page.getByTestId('odemeye-ilerle').click();
+  await page.waitForURL(`${SHOPIER}/ShowProduct/api_pay4.php`);
+  await expect(page.getByRole('heading', { name: 'Sahte Shopier ödeme sayfası' })).toBeVisible();
+  const last = (await shopierCalls()).at(-1)!;
+  expect(last.error).toBe('');
+  return last.fields.platform_order_id;
+}
+
+test('Shopier: panelden bağlanır, kartla ödeme alınır, sahte dönüş reddedilir, elle onay ve iade kaydı', async ({ browser }) => {
+  const a = await adminPage();
+  await go(a, '/yonetim/ayarlar');
+  await expect(a.getByTestId('odeme-altyapisi')).toContainText('iyzico');
+  const form = a.getByTestId('ayar-shopier');
+  await form.locator('#shopierApiKey').fill('mock-shopier-kullanici');
+  await form.locator('#shopierApiSecret').fill('mock-shopier-sifre-123');
+  await form.getByRole('button', { name: 'Kaydet' }).click();
+  await expect(form.getByRole('status')).toContainText('Shopier bağlantısı kaydedildi');
+  await go(a, '/yonetim/ayarlar');
+  await expect(a.getByTestId('odeme-altyapisi')).toHaveText('Shopier');
+  await expect(a.getByTestId('shopier-geri-donus')).toHaveText('http://localhost:3000/api/odeme/shopier/geri-donus');
+  expect(await a.content()).not.toContain('mock-shopier-sifre-123');
+  await shot(a, '23-yonetim-shopier');
+
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  const before = await stock('cuzdan-zinciri', '', '');
+
+  // 1) Başarılı ödeme
+  await addToCart(page, 'cuzdan-zinciri');
+  await go(page, '/sepet');
+  await expect(page.getByText('Shopier güvenli ödeme sayfasında')).toBeVisible();
+  await expect(page.locator('.foot-pay')).toContainText('Ödeme altyapısı: Shopier');
+  const n1 = await shopierCheckout(page);
+  const req1 = (await shopierCalls()).at(-1)!.fields;
+  const o1 = await orderRow(n1);
+  expect(req1.total_order_value).toBe((o1.total / 100).toFixed(2));
+  expect(req1.buyer_phone).toBe('5321112233');
+  expect(req1.buyer_email).toBe('shopier@example.com');
+  expect(req1.callback).toBe('http://localhost:3000/api/odeme/shopier/geri-donus');
+  expect(o1.status).toBe('pending_payment');
+  expect(o1.contracts_html).toContain('Shopier güvenli ödeme altyapısı');
+  await shot(page, '24-shopier-odeme-sayfasi');
+  await page.getByRole('button', { name: 'Ödemeyi onayla' }).click();
+  await page.waitForURL('**/siparis/**');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByTestId('odeme-basarili')).toBeVisible();
+  const p1 = await orderRow(n1);
+  expect(p1.status).toBe('paid');
+  expect(p1.payment_info.provider).toBe('shopier');
+  expect(p1.payment_id).toBeTruthy();
+  expect(await stock('cuzdan-zinciri', '', '')).toBe(before - 1);
+  await expect(page.getByTestId('sepet-adet')).toHaveCount(0);
+  await shot(page, '25-shopier-siparis-alindi');
+
+  // 2) Başarısız ödeme: stok geri döner
+  await addToCart(page, 'cuzdan-zinciri');
+  const n2 = await shopierCheckout(page);
+  await page.getByRole('button', { name: 'Ödeme başarısız' }).click();
+  await page.waitForURL('**/siparis/**');
+  await expect(page.getByTestId('odeme-basarisiz')).toBeVisible();
+  expect((await orderRow(n2)).status).toBe('payment_failed');
+  expect(await stock('cuzdan-zinciri', '', '')).toBe(before - 1);
+
+  // 3) Yanlış şifreyle imzalanmış dönüş kabul edilmez
+  const n3 = await shopierCheckout(page);
+  await page.getByRole('button', { name: 'Sahte imzalı dönüş' }).click();
+  await page.waitForURL(/\/sepet\?odeme=hata$/);
+  expect((await orderRow(n3)).status).toBe('pending_payment');
+
+  // 4) Yönetici, Shopier panelinde gördüğü ödemeyi elle onaylar
+  const [r3] = await sql<{ id: string }[]>`select id from orders where number = ${n3}`;
+  await go(a, `/yonetim/siparisler/${r3.id}`);
+  await a.getByText('Ödeme Shopier panelinde görünüyorsa elle onayla').click();
+  const onay = a.getByTestId('op-odeme-onay');
+  await onay.locator('#paymentRef').fill('SHP-998877');
+  await onay.locator('input[name="onay"]').check();
+  await onay.getByRole('button', { name: 'Ödemeyi onayla' }).click();
+  await expect.poll(async () => (await orderRow(n3)).status).toBe('paid');
+  const p3 = await orderRow(n3);
+  expect(p3.payment_id).toBe('SHP-998877');
+  expect(p3.payment_info.manual).toBe(true);
+
+  // 5) Shopier siparişini iptal: iade kaydedilir, Shopier panelinden yapılması hatırlatılır
+  const [r1] = await sql<{ id: string }[]>`select id from orders where number = ${n1}`;
+  await go(a, `/yonetim/siparisler/${r1.id}`);
+  await expect(a.getByTestId('odeme-saglayici')).toContainText('Shopier');
+  await a.getByText('Siparişi iptal et ve ücreti iade et').click();
+  const iptal = a.getByTestId('op-iptal');
+  await expect(iptal.getByTestId('shopier-iade-notu')).toBeVisible();
+  await iptal.locator('input[name="onay"]').check();
+  await iptal.getByRole('button', { name: 'İptal et ve iade et' }).click();
+  await expect.poll(async () => (await orderRow(n1)).status).toBe('cancelled');
+  const [ev] = await sql<{ message: string }[]>`select message from order_events where order_id = ${r1.id} and status = 'cancelled'`;
+  expect(ev.message).toContain('iaden başlatıldı');
+  expect(await stock('cuzdan-zinciri', '', '')).toBe(before - 1);
+
+  // 6) Bilgi metinleri Shopier'i anar
+  await go(page, '/sayfa/kvkk');
+  await expect(page.locator('article')).toContainText('ödeme kuruluşuna (Shopier)');
+  const durum = await (await page.request.get('/durum')).json();
+  expect(durum.odeme.altyapi).toBe('Shopier');
+
+  // 7) Bağlantı kaldırılınca iyzico'ya döner
+  await go(a, '/yonetim/ayarlar');
+  await a.getByTestId('shopier-kaldir').click();
+  await expect.poll(async () => {
+    const [row] = await sql`select data from settings where id = 2`;
+    return row?.data?.shopierApiKey ?? '';
+  }).toBe('');
+  await go(a, '/yonetim/ayarlar');
+  await expect(a.getByTestId('odeme-altyapisi')).toContainText('iyzico');
+
+  await ctx.close();
+  await a.close();
+});

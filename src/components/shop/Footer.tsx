@@ -3,7 +3,7 @@ import type { StoreSettings } from '@/lib/settings-defaults';
 
 type Cat = { slug: string; name: string };
 
-export function Footer({ settings, categories }: { settings: StoreSettings; categories: Cat[] }) {
+export function Footer({ settings, categories, paymentLabel }: { settings: StoreSettings; categories: Cat[]; paymentLabel: string }) {
   const s = settings;
   return (
     <footer className="site-foot">
@@ -13,7 +13,9 @@ export function Footer({ settings, categories }: { settings: StoreSettings; cate
             <span className="brand-name">{s.storeName}</span>
             <span className="brand-sub">{s.tagline}</span>
           </Link>
-          <p className="foot-pay">Kredi kartı ve banka kartıyla 3D Secure güvenli ödeme. Ödeme altyapısı: iyzico. Taksit seçenekleri ödeme adımında gösterilir.</p>
+          <p className="foot-pay">
+            Kredi kartı ve banka kartıyla 3D Secure güvenli ödeme.{paymentLabel ? ` Ödeme altyapısı: ${paymentLabel}.` : ''} Taksit seçenekleri ödeme adımında gösterilir.
+          </p>
         </div>
         <nav aria-label="Mağaza">
           <h2>Mağaza</h2>

@@ -1,6 +1,6 @@
 # Motorcu Chopper e-ticaret sitesi
 
-Motorcu yeleği, kulüp yeleği ve kişiye özel arma satan mağazanın kendi sitesi. Next.js ile yazıldı. Veritabanı Supabase'de, kartla ödeme iyzico'da çalışır, site Vercel'de yayınlanır.
+Motorcu yeleği, kulüp yeleği ve kişiye özel arma satan mağazanın kendi sitesi. Next.js ile yazıldı, Vercel'de yayınlanır. Kartla ödeme **Shopier** (şirket gerekmez, bireysel hesap yeter) veya **iyzico** (şirket gerekir) ile alınır.
 
 ## Neler var
 
@@ -9,7 +9,7 @@ Motorcu yeleği, kulüp yeleği ve kişiye özel arma satan mağazanın kendi si
 - Ürün sayfası: renk/beden seçimi, seçeneğe göre stok ve fiyat, fotoğraf galerisi
 - Kişiye özel ürünler: müşteri rocker veya isim yazısını kendisi yazar, sipariş ekranında aynen görünür
 - Sepet, indirim kodu, ücretsiz kargo sınırı
-- Ödeme: iyzico güvenli ödeme sayfası (3D Secure, taksit). Kart bilgisi sitemize hiç gelmez.
+- Ödeme: Shopier veya iyzico güvenli ödeme sayfası (3D Secure, taksit). Kart bilgisi sitemize hiç gelmez.
 - Misafir veya üye olarak sipariş
 - Sipariş sayfası: Alındı → Hazırlanıyor → Kargoda → Teslim edildi adımları, kargo takip numarası ve bağlantısı
 - Üyelik: siparişlerim, kayıtlı adresler, favoriler, şifre yenileme
@@ -18,7 +18,7 @@ Motorcu yeleği, kulüp yeleği ve kişiye özel arma satan mağazanın kendi si
 
 **Yönetim paneli** (`/yonetim`)
 - Özet: günlük ve 30 günlük satış, kargolanacak siparişler, açık talepler, azalan stok, kurulum kontrol listesi
-- Siparişler: durum değiştirme, kargo firması ve takip numarası girme, iptal, kısmi veya tam iade (iyzico üzerinden otomatik), not ekleme
+- Siparişler: durum değiştirme, kargo firması ve takip numarası girme, iptal, kısmi veya tam iade (iyzico'da otomatik, Shopier'de panelden), ödemesi siteye düşmeyen siparişi elle onaylama, not ekleme
 - Ürünler: fotoğraf yükleme (telefon fotoğrafları otomatik küçültülür), renk ve beden, seçenek bazında stok ve fiyat, kişiselleştirme alanları
 - Kategoriler, indirim kodları, müşteriler, yorum onayı, gönderilen e-postalar, ayarlar ve yöneticiler
 
@@ -35,7 +35,22 @@ Motorcu yeleği, kulüp yeleği ve kişiye özel arma satan mağazanın kendi si
 
 2-3 dakika sonra site `https://motorcu-chopper-magaza.vercel.app` gibi bir adreste açılır: 12 örnek ürün, kategoriler ve yönetim paneli (`/yonetim`) hazırdır. Ürün fotoğrafları veritabanında saklanır, ayrıca depolama gerekmez. Kurulumun durumunu `/durum` adresinden görebilirsin.
 
-Kartla ödeme için sonradan Vercel'de **Settings → Environment Variables** bölümüne iyzico anahtarlarını ekleyip **Redeploy** yap (aşağıda 2. adım). Anahtar yokken site katalog olarak çalışır, sepette "Online ödeme henüz aktif değil" yazar.
+Kartla ödemeyi açmak için `/yonetim` → **Ayarlar → Shopier ile kartla ödeme** bölümüne Shopier API bilgilerini gir (aşağıda "Shopier ile ödeme"). Ödeme bağlanana kadar site katalog olarak çalışır, sepette "Online ödeme henüz aktif değil" yazar.
+
+## Shopier ile ödeme (şirket gerekmez)
+
+1. [shopier.com](https://www.shopier.com)'da satıcı hesabı aç. Bireysel hesap için T.C. kimlik, kimlik fotoğrafı ve IBAN yeterli. Hesabın onaylanmasını bekle.
+2. Shopier panelinde **Entegrasyonlar → Modül Yönetimi → Modül Ayarları** sayfasını aç.
+3. **Kayıtlı Alan Adları** kısmına sitenin adresini (ör. `https://motorcu-chopper-magaza.vercel.app`), **Geri Dönüş URL** kısmına `https://siteadresin/api/odeme/shopier/geri-donus` adresini ekle. Bu adres sitenin yönetim panelinde **Ayarlar** sayfasında da yazar.
+4. Aynı sayfadaki **API kullanıcı** ve **API şifre**yi kopyala, sitede `/yonetim` → **Ayarlar → Shopier ile kartla ödeme** bölümüne yapıştırıp **Kaydet**. Geri dönüş adresini Shopier'de 1. satıra eklemediysen "sırası" kutusundan doğru satırı seç.
+5. Shopier'de deneme modu yok: kendi kartınla küçük bir sipariş verip ödeme sonrası siteye döndüğünü ve siparişin "Ödendi" olduğunu kontrol et, sonra panelden iptal edip Shopier'den iade et.
+
+Notlar:
+- Shopier bağlıyken ödemeler Shopier ile alınır; bağlantıyı Ayarlar'dan kaldırırsan iyzico anahtarları varsa iyzico'ya döner.
+- Shopier'in iade için bağlantısı yok. Sitede iptal/iade yaptığında tutar kaydedilir ve müşteriye bildirilir; parayı Shopier panelinden iade edersin.
+- Müşteri ödedikten sonra tarayıcıyı Shopier sayfasında kapatırsa sipariş "ödeme bekleniyor" kalabilir (40 dakika sonra "ödeme alınamadı" olur). Ödeme Shopier panelinde görünüyorsa siparişi açıp **"Ödeme Shopier panelinde görünüyorsa elle onayla"** ile onayla.
+- Anahtarları panel yerine Vercel ortam değişkeni olarak da girebilirsin: `SHOPIER_API_KEY`, `SHOPIER_API_SECRET`, `SHOPIER_WEBSITE_INDEX`.
+- Şirketsiz düzenli satışta vergi yükümlülüğü doğar; bir mali müşavire danış.
 
 ## Elle kurulum
 
@@ -51,7 +66,7 @@ Gerekenler: GitHub (bu depo), [Vercel](https://vercel.com) ve [Supabase](https:/
 3. (İsteğe bağlı) **Project Settings → API Keys**: Project URL → `SUPABASE_URL`, **secret** anahtar (eski panelde `service_role`) → `SUPABASE_SECRET_KEY`.
    Girersen ürün fotoğrafları Supabase Storage'a yüklenir (`urunler` kovası ilk kurulumda otomatik açılır); girmezsen veritabanında saklanır.
 
-### 2. iyzico test hesabı
+### 2. iyzico test hesabı (yalnızca şirketin varsa; Shopier kullanacaksan atla)
 
 1. https://sandbox-merchant.iyzipay.com/auth/register adresinden test hesabı aç (ücretsiz, belge istemez).
 2. Panelde **Ayarlar → Firma Ayarları → API Anahtarları**: `IYZICO_API_KEY` ve `IYZICO_SECRET_KEY` (ikisi de `sandbox-` ile başlar).
@@ -68,7 +83,7 @@ Gerekenler: GitHub (bu depo), [Vercel](https://vercel.com) ve [Supabase](https:/
 | `DATABASE_URL`, `DIRECT_DATABASE_URL` | 1. adımdaki adresler (Vercel'in Neon eklentisinin verdiği `DATABASE_URL` / `DATABASE_URL_UNPOOLED` da olur) |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | 1. adımdaki değerler |
 | `IYZICO_BASE_URL` | Testte `https://sandbox-api.iyzipay.com` |
-| `IYZICO_API_KEY`, `IYZICO_SECRET_KEY` | 2. adımdaki anahtarlar |
+| `IYZICO_API_KEY`, `IYZICO_SECRET_KEY` | 2. adımdaki anahtarlar (Shopier kullanacaksan boş bırak) |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | İlk yönetici hesabın (şifre en az 8 karakter) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | E-posta hesabının SMTP bilgileri |
 | `CRON_SECRET` | (İsteğe bağlı) uzun rastgele bir metin; günlük temizlik görevi için |
@@ -91,7 +106,7 @@ Gmail kullanacaksan: Google hesabında iki adımlı doğrulamayı aç, **Uygulam
 
 SMTP girilmezse e-postalar gönderilmez, yalnızca panelde **E-postalar** sayfasında görünür.
 
-## Canlı ödemeye geçiş
+## iyzico ile canlı ödemeye geçiş (şirket gerekir)
 
 1. **iyzico üye işyeri başvurusu** (iyzico.com → Başvur). Genelde istenenler: vergi levhası (şahıs şirketi yeterli), kimlik, şirket adına IBAN, imza sirküleri veya beyannamesi. Başvuruda site adresini verirsin; iyzico sitede şunlara bakar: ürünler ve fiyatlar, iletişim ve satıcı bilgileri, mesafeli satış sözleşmesi, iade koşulları, KVKK metni. Bunların hepsi hazır, sen yalnızca satıcı bilgilerini doldur.
 2. Onay gelince canlı anahtarları al. Vercel'de `IYZICO_BASE_URL=https://api.iyzipay.com` yap, `IYZICO_API_KEY` ve `IYZICO_SECRET_KEY`'i canlı anahtarlarla değiştir, yeniden yayınla.
@@ -119,7 +134,7 @@ SMTP girilmezse e-postalar gönderilmez, yalnızca panelde **E-postalar** sayfas
 
 - Kargo firmasıyla otomatik entegrasyon yok: takip numarasını elle girersin. Anlaşmalı kargo firmanın API'si varsa sonradan eklenebilir.
 - Fatura otomatik kesilmez; e-arşiv faturayı muhasebe programından kesersin. Müşterinin fatura bilgileri (bireysel/kurumsal, vergi no) siparişte görünür.
-- Ödeme yalnızca kartla. Havale ve kapıda ödeme yok.
+- Ödeme yalnızca kartla (Shopier veya iyzico). Havale ve kapıda ödeme yok.
 
 ## Geliştirme
 
@@ -131,6 +146,6 @@ npm run dev             # http://localhost:3000
 ```
 
 - Veritabanı şemasını değiştirince: `npm run db:generate` (yeni göç dosyası `drizzle/` klasörüne yazılır, sonraki derlemede uygulanır).
-- Uçtan uca testler GitHub Actions'ta her gönderimde çalışır (`.github/workflows/ci.yml`): sahte iyzico sunucusuyla sipariş, ödeme, kargo, iade, iptal, üyelik, indirim kodu ve ürün ekleme akışlarını dener. Test çıktıları ve ekran görüntüleri `ci-results` dalına yazılır.
+- Uçtan uca testler GitHub Actions'ta her gönderimde çalışır (`.github/workflows/ci.yml`): sahte iyzico ve sahte Shopier sunucularıyla sipariş, ödeme, imza kontrolü, kargo, iade, iptal, üyelik, indirim kodu ve ürün ekleme akışlarını dener. Test çıktıları ve ekran görüntüleri `ci-results` dalına yazılır.
 - GitHub'da **Settings → Secrets and variables → Actions** bölümüne `IYZICO_SANDBOX_API_KEY` ve `IYZICO_SANDBOX_SECRET_KEY` eklersen her testte iyzico'nun gerçek test sunucusuna da istek atılır ve kimlik doğrulaması kontrol edilir.
 - Örnek ürün görselleri `tools/ornek-gorseller` ile üretildi (`npm run gorseller`).

@@ -13,6 +13,7 @@ type Props = {
   cities: string[];
   contractsHtml: string;
   totalText: string;
+  paymentLabel: string;
 };
 
 function AddressFields({ prefix, cities, defaults, values }: { prefix: string; cities: string[]; defaults?: Partial<Saved>; values: Record<string, string> }) {
@@ -54,7 +55,7 @@ function AddressFields({ prefix, cities, defaults, values }: { prefix: string; c
   );
 }
 
-export function CheckoutForm({ user, saved, cities, contractsHtml, totalText }: Props) {
+export function CheckoutForm({ user, saved, cities, contractsHtml, totalText, paymentLabel }: Props) {
   const { state, pending, onSubmit } = useFormAction(placeOrder);
   const values = state.fields ?? {};
   const [addressId, setAddressId] = useState(values.addressId ?? saved[0]?.id ?? '');
@@ -219,7 +220,7 @@ export function CheckoutForm({ user, saved, cities, contractsHtml, totalText }: 
         <button type="submit" className="btn btn-primary btn-lg full" disabled={pending} data-testid="odemeye-ilerle">
           {pending ? 'Ödeme sayfası açılıyor…' : `Kartla öde (${totalText})`}
         </button>
-        <p className="small muted">Bir sonraki adımda iyzico güvenli ödeme sayfasında kart bilgilerini girersin.</p>
+        <p className="small muted">Bir sonraki adımda {paymentLabel ? `${paymentLabel} ` : ''}güvenli ödeme sayfasında kart bilgilerini girersin.</p>
       </section>
 
       <dialog ref={dialogRef} className="contract-dialog" aria-label="Sözleşmeler">

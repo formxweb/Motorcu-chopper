@@ -7,9 +7,9 @@ import { addresses, type Address, type BillingInfo } from '@/db/schema';
 import { getCurrentUser } from '@/lib/auth';
 import { getCart } from '@/lib/cart';
 import { CITIES } from '@/lib/cities';
-import { iyzicoReady } from '@/lib/env';
 import type { FormState } from '@/lib/form-state';
 import { createOrderFromCart, startPayment } from '@/lib/orders';
+import { getPaymentSetup } from '@/lib/payment';
 import { clientIp, rateLimit, userAgent } from '@/lib/rate-limit';
 import { bool, isUuid, isValidPhone, normalizePhone, str, validTcKimlik } from '@/lib/utils';
 
@@ -40,7 +40,7 @@ export async function placeOrder(_prev: FormState, fd: FormData): Promise<FormSt
   for (const [k, v] of fd.entries()) if (typeof v === 'string' && !k.startsWith('$')) fields[k] = v;
   const fail = (message: string): FormState => ({ ok: false, message, fields, at: Date.now() });
 
-  if (!iyzicoReady()) return fail('Online ödeme henüz aktif değil. Lütfen daha sonra tekrar dene.');
+  if (!(await getPaymentSetup()).ready) return fail('Online ödeme henüz aktif değil. Lütfen daha sonra tekrar dene.');
   const user = await getCurrentUser();
   const cart = await getCart();
   if (!cart.id || !cart.lines.length) return fail('Sepetin boş.');

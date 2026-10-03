@@ -7,10 +7,12 @@ import {
   orderEvents,
   orderItems,
   orders,
+  users,
   variants,
   type Address,
   type BillingInfo,
   type OrderStatus,
+  type PaymentInfo,
 } from '@/db/schema';
 import { loadCartLines, type CartLine } from './cart';
 import {
@@ -39,10 +41,12 @@ import {
 import { contractsHtml, type ContractItem } from './legal';
 import { sendMail } from './mail';
 import { formatTL, toIyzicoAmount } from './money';
+import { getPaymentSetup, getShopierConfig } from './payment';
 import { allocateDiscount, computeTotals, evaluateDiscount } from './pricing';
 import { getSettings } from './settings';
 import { trackingLink } from './settings-defaults';
 import { STATUS_LABEL } from './status';
+import { newShopierRandom, type ShopierCallback } from './shopier';
 import { isUuid, newOrderNumber, normalizePhone, randomToken } from './utils';
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
@@ -133,6 +137,7 @@ export async function createOrderFromCart(
     code = d.code;
   }
   const totals = computeTotals(subtotal, discount, settings);
+  const pay = await getPaymentSetup();
   const number = newOrderNumber();
   const accessToken = randomToken(24);
   const s = data.shipping;
@@ -151,6 +156,7 @@ export async function createOrderFromCart(
     total: totals.total,
     date: new Date(),
     orderNumber: number,
+    paymentLabel: pay.label,
   });
 
   try {
@@ -232,7 +238,57 @@ function cut(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1) + '…' : s;
 }
 
+/** Siparişin hangi altyapıyla ödendiği / ödeneceği. */
+export function paymentProviderOf(o: Pick<OrderRow, 'paymentInfo' | 'paymentToken'>): 'iyzico' | 'shopier' {
+  if (o.paymentInfo?.provider) return o.paymentInfo.provider;
+  return o.paymentToken?.startsWith('shopier:') ? 'shopier' : 'iyzico';
+}
+
 export async function startPayment(orderId: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const setup = await getPaymentSetup();
+  if (setup.provider === 'shopier') return startShopierPayment(orderId);
+  return startIyzicoPayment(orderId);
+}
+
+/** Shopier: siparişe rastgele sayı atar, müşteriyi imzalı formu basan sayfaya yollar. */
+async function startShopierPayment(orderId: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const [o] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!o) return { ok: false, error: 'Sipariş bulunamadı.' };
+  const cfg = await getShopierConfig();
+  if (!cfg.apiKey || !cfg.apiSecret) {
+    await markPaymentFailed(o.id, 'Shopier anahtarları tanımlı değil.', 'sistem');
+    return { ok: false, error: 'Online ödeme şu an kullanılamıyor. Lütfen daha sonra tekrar dene.' };
+  }
+  await db
+    .update(orders)
+    .set({ paymentToken: `shopier:${o.number}:${newShopierRandom()}`, paymentInfo: { ...(o.paymentInfo ?? {}), provider: 'shopier' }, updatedAt: new Date() })
+    .where(eq(orders.id, o.id));
+  return { ok: true, url: `${appUrl()}/api/odeme/shopier/baslat?siparis=${o.number}&t=${o.accessToken}` };
+}
+
+/** Shopier ödeme formuna girecek bilgiler. */
+export async function shopierFormData(o: OrderRow) {
+  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, o.id)).orderBy(asc(orderItems.productName));
+  const ship = o.shippingAddress;
+  const bill = o.billing.sameAsShipping ? ship : o.billing.address;
+  let accountAgeDays = 0;
+  if (o.userId) {
+    const [u] = await db.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, o.userId)).limit(1);
+    if (u) accountAgeDays = (Date.now() - u.createdAt.getTime()) / 86400000;
+  }
+  const productName = items.map((i) => `${i.productName}${i.quantity > 1 ? ` x${i.quantity}` : ''}`).join(', ');
+  return {
+    orderNumber: o.number,
+    randomNr: o.paymentToken?.split(':')[2] ?? '',
+    amount: toIyzicoAmount(o.total),
+    productName: productName || `Sipariş ${o.number}`,
+    buyer: { name: ship.firstName, surname: ship.lastName, email: o.email, phone: normalizePhone(o.phone).replace(/^0/, ''), accountAgeDays },
+    billing: { address: `${bill.line} ${bill.district}`, city: bill.city, postcode: bill.zip || '' },
+    shipping: { address: `${ship.line} ${ship.district}`, city: ship.city, postcode: ship.zip || '' },
+  };
+}
+
+async function startIyzicoPayment(orderId: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   const loaded = await loadOrder(orderId);
   if (!loaded) return { ok: false, error: 'Sipariş bulunamadı.' };
   const { order: o, items } = loaded;
@@ -291,7 +347,10 @@ export async function startPayment(orderId: string): Promise<{ ok: true; url: st
     await markPaymentFailed(o.id, msg, 'iyzico');
     return { ok: false, error: `Ödeme sayfası açılamadı: ${msg}` };
   }
-  await db.update(orders).set({ paymentToken: res.token, updatedAt: new Date() }).where(eq(orders.id, o.id));
+  await db
+    .update(orders)
+    .set({ paymentToken: res.token, paymentInfo: { ...(o.paymentInfo ?? {}), provider: 'iyzico' }, updatedAt: new Date() })
+    .where(eq(orders.id, o.id));
   if (verifyInitSignature(res, cfg.secretKey) === false) {
     await addEvent(db, o.id, '', 'iyzico başlatma yanıtının imzası doğrulanamadı.', false, 'sistem');
   }
@@ -338,9 +397,45 @@ export async function finalizePayment(token: string, source: string): Promise<Fi
   if (sigOk === false) warnings.push('iyzico yanıt imzası doğrulanamadı. Ödemeyi iyzico panelinden kontrol edin.');
   if (r.fraudStatus === 0) warnings.push('iyzico bu ödemeyi incelemeye aldı. iyzico panelinde onaylanmadan kargolamayın.');
 
+  await applyPaid(found.id, {
+    paymentId: String(r.paymentId ?? ''),
+    paidTotal: paidKurus || null,
+    installment: r.installment ?? 1,
+    paymentInfo: {
+      provider: 'iyzico',
+      cardFamily: r.cardFamily,
+      cardAssociation: r.cardAssociation,
+      cardType: r.cardType,
+      lastFourDigits: r.lastFourDigits,
+      binNumber: r.binNumber,
+      fraudStatus: r.fraudStatus,
+      installment: r.installment,
+      signatureOk: sigOk,
+      sandbox: cfg.sandbox,
+    },
+    itemTransactions: (r.itemTransactions ?? []).map((t) => ({ itemId: String(t.itemId), transactionId: String(t.paymentTransactionId) })),
+    warnings,
+    actor: `iyzico (${source})`,
+  });
+  return { ...base, status: 'paid' };
+}
+
+type PaidData = {
+  paymentId: string;
+  paidTotal: number | null;
+  installment: number;
+  paymentInfo: PaymentInfo;
+  itemTransactions?: { itemId: string; transactionId: string }[];
+  warnings: string[];
+  actor: string;
+};
+
+/** Ödemesi doğrulanan siparişi "ödendi" yapar: stok, kupon, sepet, olay kaydı ve e-postalar. */
+async function applyPaid(orderId: string, p: PaidData): Promise<boolean> {
+  const warnings = [...p.warnings];
   let becamePaid = false;
   await db.transaction(async (tx) => {
-    const [o] = await tx.select().from(orders).where(eq(orders.id, found.id)).for('update');
+    const [o] = await tx.select().from(orders).where(eq(orders.id, orderId)).for('update');
     if (!o || (o.status !== 'pending_payment' && o.status !== 'payment_failed')) return;
     if (!o.stockReserved) {
       const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, o.id));
@@ -358,31 +453,21 @@ export async function finalizePayment(token: string, source: string): Promise<Fi
       .update(orders)
       .set({
         status: 'paid',
-        paymentId: String(r.paymentId ?? ''),
-        paidTotal: paidKurus || o.total,
-        installment: r.installment ?? 1,
-        paymentInfo: {
-          cardFamily: r.cardFamily,
-          cardAssociation: r.cardAssociation,
-          cardType: r.cardType,
-          lastFourDigits: r.lastFourDigits,
-          binNumber: r.binNumber,
-          fraudStatus: r.fraudStatus,
-          installment: r.installment,
-          signatureOk: sigOk,
-          sandbox: cfg.sandbox,
-        },
+        paymentId: p.paymentId,
+        paidTotal: p.paidTotal || o.total,
+        installment: p.installment,
+        paymentInfo: p.paymentInfo,
         paidAt: new Date(),
         stockReserved: true,
         updatedAt: new Date(),
       })
       .where(eq(orders.id, o.id));
-    for (const tr of r.itemTransactions ?? []) {
-      if (!isUuid(String(tr.itemId))) continue;
+    for (const tr of p.itemTransactions ?? []) {
+      if (!isUuid(tr.itemId)) continue;
       await tx
         .update(orderItems)
-        .set({ paymentTransactionId: String(tr.paymentTransactionId) })
-        .where(and(eq(orderItems.orderId, o.id), eq(orderItems.id, String(tr.itemId))));
+        .set({ paymentTransactionId: tr.transactionId })
+        .where(and(eq(orderItems.orderId, o.id), eq(orderItems.id, tr.itemId)));
     }
     if (o.discountCode) {
       await tx
@@ -394,13 +479,58 @@ export async function finalizePayment(token: string, source: string): Promise<Fi
       await tx.delete(cartItems).where(eq(cartItems.cartId, o.cartId));
       await tx.update(carts).set({ discountCode: '', updatedAt: new Date() }).where(eq(carts.id, o.cartId));
     }
-    await addEvent(tx, o.id, 'paid', 'Ödemen alındı. Siparişin hazırlanmayı bekliyor.', true, `iyzico (${source})`);
+    await addEvent(tx, o.id, 'paid', 'Ödemen alındı. Siparişin hazırlanmayı bekliyor.', true, p.actor);
     for (const w of warnings) await addEvent(tx, o.id, '', w, false, 'sistem');
     becamePaid = true;
   });
+  if (becamePaid) await sendPaidEmails(orderId);
+  return becamePaid;
+}
 
-  if (becamePaid) await sendPaidEmails(found.id);
+/** Shopier'in imzası doğrulanmış geri dönüşünü işler. */
+export async function finalizeShopierPayment(cb: ShopierCallback): Promise<FinalizeResult | null> {
+  if (!/^[A-Z0-9]{6,20}$/.test(cb.orderNumber)) return null;
+  const [found] = await db.select().from(orders).where(eq(orders.number, cb.orderNumber)).limit(1);
+  if (!found) return null;
+  const base = { orderId: found.id, number: found.number, accessToken: found.accessToken };
+  if (found.status !== 'pending_payment' && found.status !== 'payment_failed') return { ...base, status: found.status };
+
+  if (cb.status !== 'success') {
+    if (found.status === 'pending_payment') await markPaymentFailed(found.id, 'Ödeme Shopier sayfasında tamamlanmadı.', 'Shopier (dönüş)');
+    return { ...base, status: 'payment_failed' };
+  }
+  const warnings: string[] = [];
+  const expected = found.paymentToken?.startsWith('shopier:') ? found.paymentToken.split(':')[2] : '';
+  if (expected && expected !== cb.randomNr) warnings.push('Shopier dönüşündeki işlem numarası bu siparişin son ödeme denemesiyle uyuşmuyor. Ödemeyi Shopier panelinden kontrol edin.');
+  await applyPaid(found.id, {
+    paymentId: cb.paymentId,
+    paidTotal: found.total,
+    installment: cb.installment,
+    paymentInfo: { provider: 'shopier', installment: cb.installment, signatureOk: true },
+    warnings,
+    actor: 'Shopier (dönüş)',
+  });
   return { ...base, status: 'paid' };
+}
+
+/** Ödemesi altyapı panelinde görünen ama siteye düşmeyen siparişi yönetici elle onaylar. */
+export async function adminConfirmPayment(orderId: string, reference: string, actor: string): Promise<ActionResult> {
+  const l = await loadOrder(orderId);
+  if (!l) return { ok: false, message: 'Sipariş bulunamadı.' };
+  const o = l.order;
+  if (o.status !== 'pending_payment' && o.status !== 'payment_failed') return notAllowed(o, 'ödeme onayı');
+  const ref = reference.trim().slice(0, 80);
+  if (!ref) return { ok: false, message: 'Ödeme panelindeki işlem / sipariş numarasını yaz.' };
+  const provider = paymentProviderOf(o);
+  const ok = await applyPaid(o.id, {
+    paymentId: ref,
+    paidTotal: o.total,
+    installment: 1,
+    paymentInfo: { provider, manual: true },
+    warnings: [`Ödeme yönetici tarafından elle onaylandı (${provider === 'shopier' ? 'Shopier' : 'iyzico'} işlem no: ${ref}).`],
+    actor,
+  });
+  return ok ? { ok: true, message: 'Ödeme onaylandı, sipariş hazırlanmaya hazır.' } : { ok: false, message: 'Sipariş güncellenemedi, sayfayı yenileyip tekrar dene.' };
 }
 
 async function sendPaidEmails(orderId: string) {
@@ -416,7 +546,7 @@ async function sendPaidEmails(orderId: string) {
   }
 }
 
-/** Ödeme sayfasında yarıda kalan siparişleri iyzico'dan kontrol eder, ödenmemişse stoğu geri bırakır. */
+/** Ödeme sayfasında yarıda kalan siparişleri kontrol eder (iyzico'ya sorar), ödenmemişse stoğu geri bırakır. */
 export async function cleanupExpiredOrders(limit = 10): Promise<number> {
   const cutoff = new Date(Date.now() - 40 * 60 * 1000);
   const rows = await db
@@ -427,7 +557,8 @@ export async function cleanupExpiredOrders(limit = 10): Promise<number> {
     .limit(limit);
   for (const r of rows) {
     try {
-      if (r.token) await finalizePayment(r.token, 'süre kontrolü');
+      if (r.token?.startsWith('shopier:')) await markPaymentFailed(r.id, 'Shopier ödeme sayfasında ödeme tamamlanmadı, süre doldu.', 'sistem');
+      else if (r.token) await finalizePayment(r.token, 'süre kontrolü');
       else await markPaymentFailed(r.id, 'Ödeme sayfasına geçilmedi, süre doldu.', 'sistem');
     } catch (e) {
       console.error('[temizlik] sipariş kontrol edilemedi', r.id, e);
@@ -438,10 +569,21 @@ export async function cleanupExpiredOrders(limit = 10): Promise<number> {
 
 /* ---------- yönetim işlemleri ---------- */
 
-async function refundMoney(o: OrderRow, amount: number): Promise<ActionResult> {
-  if (!o.paymentId) return { ok: false, message: 'Bu siparişte iyzico ödeme kaydı yok.' };
+type RefundResult = ActionResult & { manual?: boolean };
+
+/** Müşteriye gösterilen iade cümlesi. */
+function refundPhrase(o: OrderRow, amount: number): string {
+  return paymentProviderOf(o) === 'shopier' ? `${formatTL(amount)} iaden başlatıldı, bankana göre birkaç iş günü içinde kartına yansır.` : `${formatTL(amount)} kartına iade edildi.`;
+}
+
+async function refundMoney(o: OrderRow, amount: number): Promise<RefundResult> {
   const refundable = (o.paidTotal ?? o.total) - o.refundTotal;
   if (amount <= 0 || amount > refundable) return { ok: false, message: `İade tutarı 0 ile ${formatTL(refundable)} arasında olmalı.` };
+  if (paymentProviderOf(o) === 'shopier') {
+    // Shopier'in iade için bir API'si yok: iade Shopier panelinden yapılır, burada kaydı tutulur.
+    return { ok: true, manual: true, message: `${formatTL(amount)} iade olarak kaydedildi. Tutarı Shopier panelinden müşteriye iade etmeyi unutma.` };
+  }
+  if (!o.paymentId) return { ok: false, message: 'Bu siparişte iyzico ödeme kaydı yok.' };
   const ip = o.ip || '127.0.0.1';
   const sameDay = !!o.paidAt && istanbulDateKey(o.paidAt) === istanbulDateKey(new Date());
   if (amount === refundable && o.refundTotal === 0 && sameDay) {
@@ -527,10 +669,12 @@ export async function adminCancel(orderId: string, reason: string, restock: bool
   if (!['paid', 'preparing', 'shipped'].includes(o.status)) return notAllowed(o, 'iptal');
   const amount = (o.paidTotal ?? o.total) - o.refundTotal;
   let refunded = 0;
+  let refundNote = '';
   if (amount > 0) {
     const r = await refundMoney(o, amount);
     if (!r.ok) return r;
     refunded = amount;
+    if (r.manual) refundNote = ` ${r.message}`;
   }
   await db.transaction(async (tx) => {
     if (restock && o.stockReserved) await releaseStock(tx, o.id);
@@ -545,13 +689,13 @@ export async function adminCancel(orderId: string, reason: string, restock: bool
         updatedAt: new Date(),
       })
       .where(eq(orders.id, o.id));
-    await addEvent(tx, o.id, 'cancelled', `Siparişin iptal edildi.${reason ? ' ' + reason : ''}${refunded ? ` ${formatTL(refunded)} kartına iade edildi.` : ''}`, true, actor);
+    await addEvent(tx, o.id, 'cancelled', `Siparişin iptal edildi.${reason ? ' ' + reason : ''}${refunded ? ` ${refundPhrase(o, refunded)}` : ''}`, true, actor);
   });
   const s = await getSettings();
   const fresh = (await loadOrder(orderId))!.order;
   const m = cancelledEmail(s, fresh, refunded, reason);
   await sendMail({ to: fresh.email, subject: m.subject, html: m.html, replyTo: s.contactEmail || undefined });
-  return { ok: true, message: refunded ? `Sipariş iptal edildi, ${formatTL(refunded)} iade edildi.` : 'Sipariş iptal edildi.' };
+  return { ok: true, message: refunded ? `Sipariş iptal edildi, ${formatTL(refunded)} iade edildi.${refundNote}` : 'Sipariş iptal edildi.' };
 }
 
 export async function adminRefund(orderId: string, amount: number, restock: boolean, note: string, actor: string): Promise<ActionResult> {
@@ -575,7 +719,7 @@ export async function adminRefund(orderId: string, amount: number, restock: bool
         updatedAt: new Date(),
       })
       .where(eq(orders.id, o.id));
-    await addEvent(tx, o.id, full ? 'refunded' : '', `${formatTL(amount)} kartına iade edildi.${note ? ' ' + note : ''}`, true, actor);
+    await addEvent(tx, o.id, full ? 'refunded' : '', `${refundPhrase(o, amount)}${note ? ' ' + note : ''}`, true, actor);
   });
   const s = await getSettings();
   const fresh = (await loadOrder(orderId))!.order;
