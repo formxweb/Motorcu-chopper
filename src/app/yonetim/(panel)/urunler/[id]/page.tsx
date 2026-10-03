@@ -7,11 +7,13 @@ import { categories, productImages, products, variants } from '@/db/schema';
 import { kurusToInput } from '@/lib/money';
 import { syncVariants, type EditorPayload } from '@/lib/product-editor';
 import { isUuid } from '@/lib/utils';
+import { requireAdmin } from '@/lib/auth';
 
 type Params = Promise<{ id: string }>;
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function EditProductPage({ params, searchParams }: { params: Params; searchParams: SP }) {
+  await requireAdmin();
   const { id } = await params;
   const sp = await searchParams;
   if (!isUuid(id)) notFound();

@@ -10,10 +10,12 @@ import { formatTL } from '@/lib/money';
 import { paymentProviderOf } from '@/lib/orders';
 import { getSettings } from '@/lib/settings';
 import { isUuid } from '@/lib/utils';
+import { requireAdmin } from '@/lib/auth';
 
 type Params = Promise<{ id: string }>;
 
 export default async function AdminOrderPage({ params }: { params: Params }) {
+  await requireAdmin();
   const { id } = await params;
   if (!isUuid(id)) notFound();
   const [o] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);

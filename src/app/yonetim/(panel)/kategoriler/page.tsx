@@ -3,8 +3,10 @@ import { deleteCategory, saveCategory } from '@/app/actions/admin-catalog';
 import { ActionForm, ConfirmButton } from '@/components/forms';
 import { db } from '@/db';
 import { categories } from '@/db/schema';
+import { requireAdmin } from '@/lib/auth';
 
 export default async function CategoriesPage() {
+  await requireAdmin();
   const list = await db
     .select({
       c: categories,

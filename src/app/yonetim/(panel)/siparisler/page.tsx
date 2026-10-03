@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { orders, type OrderStatus } from '@/db/schema';
 import { formatShortDate } from '@/lib/format';
 import { formatTL } from '@/lib/money';
+import { requireAdmin } from '@/lib/auth';
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
@@ -18,6 +19,7 @@ const GROUPS: { key: string; label: string; statuses: OrderStatus[] }[] = [
 const PAGE = 50;
 
 export default async function OrdersPage({ searchParams }: { searchParams: SP }) {
+  await requireAdmin();
   const sp = await searchParams;
   const durum = typeof sp.durum === 'string' ? sp.durum : 'tumu';
   const q = typeof sp.q === 'string' ? sp.q.trim().slice(0, 60) : '';

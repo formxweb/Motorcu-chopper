@@ -676,3 +676,52 @@ test('Shopier: panelden bağlanır, kartla ödeme alınır, sahte dönüş redde
   await ctx.close();
   await a.close();
 });
+
+/* ---------- Yetki ---------- */
+
+async function registerCustomer(page: Page, email: string) {
+  await go(page, '/hesap/kayit');
+  await page.locator('#firstName').fill('Deneme');
+  await page.locator('#lastName').fill('Müşteri');
+  await page.locator('#r-email').fill(email);
+  await page.locator('#r-password').fill('musteri-sifre-1');
+  await page.locator('input[name="kvkk"]').check();
+  await page.getByRole('button', { name: 'Üye ol' }).click();
+  await page.waitForURL('**/hesap');
+}
+
+test('üye olan müşteri yönetim paneline giremez', async ({ browser }) => {
+  // 1) Yeni üye doğrudan panel adreslerini açamaz, yönetici girişinden de giremez
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await registerCustomer(page, 'yetkisiz1@example.com');
+  for (const path of ['/yonetim', '/yonetim/siparisler', '/yonetim/musteriler', '/yonetim/urunler', '/yonetim/ayarlar', '/yonetim/e-postalar']) {
+    await go(page, path);
+    await expect(page).toHaveURL(/\/yonetim\/giris/);
+    await expect(page.locator('.adm-nav')).toHaveCount(0);
+  }
+  await page.locator('#a-email').fill('yetkisiz1@example.com');
+  await page.locator('#a-password').fill('musteri-sifre-1');
+  await page.getByRole('button', { name: 'Giriş yap' }).click();
+  await expect(errMsg(page)).toContainText('yönetici yetkisi yok');
+  const upload = await page.request.post('/api/yonetim/gorsel', { multipart: { main: { name: 'a.png', mimeType: 'image/png', buffer: Buffer.from('x') } } });
+  expect(upload.status()).toBe(401);
+  const customerCookie = (await ctx.cookies()).find((c) => c.name === 'mc_oturum');
+  expect(customerCookie).toBeTruthy();
+  await ctx.close();
+
+  // 2) Panel açıkken tarayıcıdaki oturum müşteri hesabına geçerse panel içi geçişler de girişe döner
+  const shared = await browser.newContext();
+  const panel = await shared.newPage();
+  await go(panel, '/yonetim/giris');
+  await panel.locator('#a-email').fill(ADMIN_EMAIL);
+  await panel.locator('#a-password').fill(ADMIN_PASSWORD);
+  await panel.getByRole('button', { name: 'Giriş yap' }).click();
+  await panel.waitForURL('**/yonetim');
+  await expect(panel.getByRole('heading', { name: 'Özet' })).toBeVisible();
+  await shared.addCookies([customerCookie!]);
+  await panel.getByRole('navigation', { name: 'Yönetim menüsü' }).getByRole('link', { name: 'Müşteriler' }).click();
+  await panel.waitForURL(/\/yonetim\/giris/);
+  await expect(panel.getByText('uye@example.com')).toHaveCount(0);
+  await shared.close();
+});

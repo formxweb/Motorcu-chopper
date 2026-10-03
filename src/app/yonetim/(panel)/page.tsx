@@ -10,6 +10,7 @@ import { formatTL } from '@/lib/money';
 import { cleanupExpiredOrders } from '@/lib/orders';
 import { getPaymentSetup } from '@/lib/payment';
 import { getSettings, missingSellerFields } from '@/lib/settings';
+import { requireAdmin } from '@/lib/auth';
 
 const PAID: OrderStatus[] = ['paid', 'preparing', 'shipped', 'delivered', 'return_requested', 'refunded', 'cancelled'];
 
@@ -22,6 +23,7 @@ function istanbulMidnight(daysAgo = 0): Date {
 }
 
 export default async function Dashboard() {
+  await requireAdmin();
   try {
     await cleanupExpiredOrders(5);
   } catch (e) {

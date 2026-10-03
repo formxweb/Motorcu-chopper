@@ -5,8 +5,10 @@ import { db } from '@/db';
 import { discountCodes } from '@/db/schema';
 import { formatDate } from '@/lib/format';
 import { formatTL } from '@/lib/money';
+import { requireAdmin } from '@/lib/auth';
 
 export default async function CouponsPage() {
+  await requireAdmin();
   const list = await db.select().from(discountCodes).orderBy(desc(discountCodes.createdAt));
   return (
     <>

@@ -4,8 +4,10 @@ import { ProductEditor } from '@/components/admin/ProductEditor';
 import { db } from '@/db';
 import { categories } from '@/db/schema';
 import type { EditorPayload } from '@/lib/product-editor';
+import { requireAdmin } from '@/lib/auth';
 
 export default async function NewProductPage() {
+  await requireAdmin();
   const cats = await db.select({ id: categories.id, name: categories.name }).from(categories).orderBy(asc(categories.sortOrder));
   const initial: EditorPayload = {
     name: '',

@@ -5,8 +5,10 @@ import { ConfirmButton } from '@/components/forms';
 import { db } from '@/db';
 import { products, reviews, users } from '@/db/schema';
 import { formatDate } from '@/lib/format';
+import { requireAdmin } from '@/lib/auth';
 
 export default async function ReviewsPage() {
+  await requireAdmin();
   const list = await db
     .select({ r: reviews, product: products.name, slug: products.slug, email: users.email })
     .from(reviews)

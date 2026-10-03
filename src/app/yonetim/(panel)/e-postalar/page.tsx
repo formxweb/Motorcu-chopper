@@ -3,10 +3,12 @@ import { db } from '@/db';
 import { emailLog } from '@/db/schema';
 import { smtpReady } from '@/lib/env';
 import { formatShortDate } from '@/lib/format';
+import { requireAdmin } from '@/lib/auth';
 
 const LABEL = { sent: 'Gönderildi', failed: 'Gönderilemedi', not_configured: 'SMTP yok, gönderilmedi' } as const;
 
 export default async function EmailsPage() {
+  await requireAdmin();
   const list = await db.select().from(emailLog).orderBy(desc(emailLog.createdAt)).limit(150);
   return (
     <>

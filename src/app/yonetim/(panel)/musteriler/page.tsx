@@ -4,10 +4,12 @@ import { db } from '@/db';
 import { orders, users } from '@/db/schema';
 import { formatDate, formatPhone } from '@/lib/format';
 import { formatTL } from '@/lib/money';
+import { requireAdmin } from '@/lib/auth';
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function CustomersPage({ searchParams }: { searchParams: SP }) {
+  await requireAdmin();
   const sp = await searchParams;
   const q = typeof sp.q === 'string' ? sp.q.trim().slice(0, 60) : '';
   const like = `%${q.replace(/[%_]/g, '')}%`;

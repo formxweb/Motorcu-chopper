@@ -5,10 +5,12 @@ import { db } from '@/db';
 import { categories, products, variants } from '@/db/schema';
 import { imagesByProduct, pickImage } from '@/lib/cart';
 import { formatTL } from '@/lib/money';
+import { requireAdmin } from '@/lib/auth';
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function AdminProductsPage({ searchParams }: { searchParams: SP }) {
+  await requireAdmin();
   const sp = await searchParams;
   const q = typeof sp.q === 'string' ? sp.q.trim().slice(0, 60) : '';
   const kat = typeof sp.kategori === 'string' ? sp.kategori : '';

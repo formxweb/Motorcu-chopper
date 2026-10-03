@@ -34,6 +34,9 @@ export function normalizeEmail(email: string): string {
 
 /** Yalnızca Server Action veya Route Handler içinde çağrılır. */
 export async function createSession(userId: string): Promise<void> {
+  // Aynı tarayıcıda başka bir hesaba geçilirse önceki oturum (ör. yönetici) tamamen kapanır.
+  const previous = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (previous) await db.delete(sessions).where(eq(sessions.id, sha256(previous)));
   const token = randomToken(32);
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 3600 * 1000);
   await db.insert(sessions).values({ id: sha256(token), userId, expiresAt });
