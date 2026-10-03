@@ -165,7 +165,7 @@ export default async function SettingsPage() {
               <dt>Geri dönüş adresi</dt>
               <dd className="sel" data-testid="shopier-geri-donus">{callbackUrl}</dd>
             </dl>
-            <ol className="hint steps">
+            <ol className="hint setup-steps">
               <li>shopier.com&apos;da satıcı hesabı aç (bireysel hesap da olur) ve hesabını onaylat.</li>
               <li>
                 Shopier panelinde <strong>Entegrasyonlar → Modül Yönetimi → Modül Ayarları</strong> sayfasını aç.
@@ -204,7 +204,7 @@ export default async function SettingsPage() {
                   </select>
                 </label>
                 {shopier.source === 'panel' ? (
-                  <button type="submit" name="shopierRemove" value="1" className="btn btn-ghost btn-sm" data-testid="shopier-kaldir">
+                  <button type="submit" name="shopierRemove" value="1" className="btn btn-ghost btn-sm inline-start" data-testid="shopier-kaldir">
                     Shopier bağlantısını kaldır
                   </button>
                 ) : null}

@@ -534,9 +534,13 @@ article.op {
   color: var(--muted);
 }
 
-ol.steps {
+ol.setup-steps {
   margin: 12px 0;
   padding-left: 20px;
   display: grid;
   gap: 6px;
+  line-height: 1.5;
+}
+.btn.inline-start {
+  justify-self: start;
 }
